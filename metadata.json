@@ -1,0 +1,6 @@
+{
+  "name": "Listes de Noël - Audrey, Arthur & Zoé",
+  "description": "Application festive de listes de cadeaux de Noël inspirée de Milirose pour Audrey, Arthur et Zoé avec ajout automatique par liens, réservation secrète et suivi du traîneau.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
