@@ -183,19 +183,22 @@ git push -u origin main`;
             </p>
           </div>
 
-          {/* OPTION 3: Sauvegarde des données JSON uniquement */}
-          <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 space-y-3">
+          {/* OPTION 3: Sauvegarde & Synchronisation Firebase Firestore */}
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-stone-700" />
+                <Database className="h-4 w-4 text-amber-700" />
                 <h4 className="text-xs font-bold text-stone-900">
-                  Option 3 : Sauvegarde de la base de données ({gifts.length} cadeaux)
+                  Option 3 : Base Firebase Firestore ({gifts.length} cadeaux synchronisés)
                 </h4>
               </div>
+              <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full border border-emerald-200">
+                Temps réel actif
+              </span>
             </div>
 
             <p className="text-xs text-stone-600 leading-relaxed">
-              Téléchargez uniquement le fichier de données JSON pour faire une copie de sécurité de vos listes ou restaurer une liste précédente.
+              Vos idées de cadeaux sont maintenant stockées et synchronisées en direct dans la base de données <strong>Google Firebase Firestore</strong> sans authentification et sans compte. Vous pouvez aussi télécharger une sauvegarde JSON ou restaurer un fichier.
             </p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">

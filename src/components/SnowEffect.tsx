@@ -57,9 +57,9 @@ export const SnowEffect: React.FC<SnowEffectProps> = ({ enabled }) => {
 
       for (let i = 0; i < flakes.length; i++) {
         const f = flakes[i];
-        ctx.beginPath();
-        ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2, false);
-        ctx.fillStyle = `rgba(255, 255, 255, ${f.opacity})`;
+        ctx.shadowColor = 'rgba(160, 190, 230, 0.6)';
+        ctx.shadowBlur = 3;
+        ctx.fillStyle = `rgba(240, 248, 255, ${f.opacity})`;
         ctx.fill();
 
         f.y += f.speed;

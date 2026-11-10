@@ -79,72 +79,302 @@ if (process.env.GEMINI_API_KEY) {
   aiClient = new GoogleGenAI({});
 }
 
-// Scrape link metadata helper
+// Helper to extract and normalize numeric prices from strings or numbers
+function parsePrice(raw: any): number | null {
+  if (raw === undefined || raw === null || raw === '') return null;
+  if (typeof raw === 'number') return raw > 0 ? raw : null;
+  const str = String(raw).trim().replace(/\s+/g, ' ');
+
+  // Match e.g. "49,99 €", "49.99€", "€ 49.99", "49€99", "49,99"
+  const m1 = str.match(/([0-9]{1,5})\s*€\s*([0-9]{2})/);
+  if (m1) return parseFloat(`${m1[1]}.${m1[2]}`);
+
+  const m2 = str.match(/([0-9]{1,5}(?:[.,][0-9]{2})?)\s*(?:€|EUR)/i) ||
+             str.match(/(?:€|EUR)\s*([0-9]{1,5}(?:[.,][0-9]{2})?)/i);
+  if (m2) {
+    const val = parseFloat(m2[1].replace(',', '.'));
+    if (!isNaN(val) && val > 0) return val;
+  }
+
+  const m3 = str.match(/^[0-9]+(?:[.,][0-9]{1,2})?$/);
+  if (m3) {
+    const val = parseFloat(m3[0].replace(',', '.'));
+    if (!isNaN(val) && val > 0) return val;
+  }
+  return null;
+}
+
+// Recursively locate Product entity inside JSON-LD (supports root objects, @graph, mainEntity, and arrays)
+function extractProductFromLdJson(data: any): any {
+  if (!data) return null;
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const found = extractProductFromLdJson(item);
+      if (found) return found;
+    }
+  } else if (typeof data === 'object') {
+    const type = data['@type'];
+    const isProduct =
+      type === 'Product' ||
+      (Array.isArray(type) && type.includes('Product')) ||
+      type === 'IndividualProduct' ||
+      type === 'Book';
+    if (isProduct) return data;
+    if (data['@graph']) return extractProductFromLdJson(data['@graph']);
+    if (data.mainEntity) return extractProductFromLdJson(data.mainEntity);
+  }
+  return null;
+}
+
+// Extract image URL from a JSON-LD Product object
+function extractImageFromProduct(prod: any): string | null {
+  if (!prod.image) return null;
+  if (typeof prod.image === 'string') return prod.image;
+  if (Array.isArray(prod.image)) {
+    const first = prod.image[0];
+    if (typeof first === 'string') return first;
+    if (first && typeof first === 'object') return first.url || first.contentUrl || null;
+  }
+  if (typeof prod.image === 'object') {
+    return prod.image.url || prod.image.contentUrl || null;
+  }
+  return null;
+}
+
+// Extract price from a JSON-LD Product object
+function extractPriceFromProduct(prod: any): number | null {
+  if (!prod.offers) return null;
+  const offersList = Array.isArray(prod.offers)
+    ? prod.offers
+    : (prod.offers.offers && Array.isArray(prod.offers.offers) ? prod.offers.offers : [prod.offers]);
+
+  for (const offer of offersList) {
+    if (!offer) continue;
+    const rawPrice = offer.price ?? offer.lowPrice ?? offer.highPrice ?? offer.priceSpecification?.price;
+    const parsed = parsePrice(rawPrice);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+// Extract Amazon ASIN from any URL format
+function extractAmazonAsin(urlStr: string): string | null {
+  const match = urlStr.match(/(?:\/dp\/|\/product\/|\/gp\/product\/|\/d\/)([A-Z0-9]{10})/i) ||
+                urlStr.match(/\/([A-Z0-9]{10})(?:[/?#]|$)/i);
+  return match ? match[1] : null;
+}
+
+// Beautiful, curated fallback images when website blocks direct image retrieval
+function getSmartFallbackImage(title: string, category: string): string {
+  const t = title.toLowerCase();
+  if (t.includes('liseuse') || t.includes('kindle') || t.includes('livre') || t.includes('roman') || t.includes('bd') || t.includes('manga') || t.includes('book')) {
+    return 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('casque') || t.includes('audio') || t.includes('écouteur') || t.includes('airpods') || t.includes('enceinte')) {
+    return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('photo') || t.includes('appareil') || t.includes('instax') || t.includes('polaroid') || t.includes('camera')) {
+    return 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('pull') || t.includes('écharpe') || t.includes('cachemire') || t.includes('laine') || t.includes('veste') || t.includes('manteau') || t.includes('sac')) {
+    return 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('thé') || t.includes('tisane') || t.includes('infusion') || t.includes('mug') || t.includes('bougie') || t.includes('diffuseur')) {
+    return 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('café') || t.includes('moulin') || t.includes('espresso') || t.includes('tasse')) {
+    return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('jeu') || t.includes('lego') || t.includes('société') || t.includes('puzzle') || t.includes('jouet')) {
+    return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80';
+  }
+  if (t.includes('parfum') || t.includes('soin') || t.includes('crème') || t.includes('beauté') || t.includes('maquillage')) {
+    return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80';
+  }
+
+  if (t.includes('sport') || t.includes('ski') || t.includes('vélo') || t.includes('velo') || t.includes('randonnée') || t.includes('camping') || t.includes('fitness') || t.includes('running') || t.includes('escalade') || t.includes('outdoor')) {
+    return 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80';
+  }
+
+  switch (category) {
+    case 'Sport & Outdoor':
+      return 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80';
+    case 'High-Tech & Audio':
+      return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
+    case 'Mode & Accessoires':
+      return 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80';
+    case 'Livres & Culture':
+      return 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80';
+    case 'Jeux & Loisirs':
+      return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80';
+    case 'Beauté & Bien-être':
+      return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80';
+    default:
+      return 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=800&q=80';
+  }
+}
+
+// Comprehensive multi-layer scraper from raw HTML
 async function extractMetadataFromHtml(html: string, originalUrl: string) {
   const getMeta = (propNames: string[]): string | null => {
     for (const name of propNames) {
-      const match =
-        html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']*)["']`, 'i')) ||
-        html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${name}["']`, 'i'));
-      if (match && match[1]) {
-        return match[1].trim();
-      }
+      // 1. name/property/itemprop before content
+      const m1 = html.match(new RegExp(`<meta\\s+[^>]*(?:property|name|itemprop)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'is'));
+      if (m1 && m1[1] && m1[1].trim()) return m1[1].trim();
+
+      // 2. content before name/property/itemprop
+      const m2 = html.match(new RegExp(`<meta\\s+[^>]*content=["']([^"']*)["'][^>]*?(?:property|name|itemprop)=["']${name}["']`, 'is'));
+      if (m2 && m2[1] && m2[1].trim()) return m2[1].trim();
     }
     return null;
   };
 
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   let title = getMeta(['og:title', 'twitter:title']) || (titleMatch ? titleMatch[1].trim() : '');
-  // Clean store suffixes like " | Amazon.fr", " - Fnac", etc.
-  title = title.replace(/\s*[-–|•]\s*(Amazon\.fr|Fnac|Sephora|Zara|Boulanger|Decathlon|Apple|Darty|Cdiscount).*$/i, '').trim();
+  // Clean store suffixes
+  title = title.replace(/\s*[-–|•]\s*(Amazon\.fr|Fnac|Sephora|Zara|Boulanger|Decathlon|Apple|Darty|Cdiscount|Cultura|IKEA).*$/i, '').trim();
 
   const description = getMeta(['og:description', 'twitter:description', 'description']) || '';
-  let imageUrl = getMeta(['og:image', 'twitter:image', 'image']) || '';
+  let imageUrl = getMeta(['og:image', 'og:image:url', 'og:image:secure_url', 'twitter:image', 'twitter:image:src', 'image']) || '';
   const siteName = getMeta(['og:site_name', 'twitter:site']) || '';
 
-  // Extract Price
+  // Extract Price from Meta Tags
   let price: number | null = null;
-  const priceMeta = getMeta(['og:price:amount', 'product:price:amount', 'price']);
-  if (priceMeta) {
-    const parsed = parseFloat(priceMeta.replace(',', '.'));
-    if (!isNaN(parsed) && parsed > 0) {
-      price = parsed;
+  const rawMetaPrice = getMeta(['product:price:amount', 'og:price:amount', 'price', 'twitter:data1']);
+  if (rawMetaPrice) {
+    price = parsePrice(rawMetaPrice);
+  }
+
+  // Extract Price from Microdata (<span itemprop="price" ...>)
+  if (!price) {
+    const itempropContentMatch = html.match(/<(?:span|meta)[^>]*itemprop=["']price["'][^>]*content=["']([^"']*)["']/i);
+    if (itempropContentMatch && itempropContentMatch[1]) {
+      price = parsePrice(itempropContentMatch[1]);
+    }
+  }
+  if (!price) {
+    const itempropTextMatch = html.match(/<span[^>]*itemprop=["']price["'][^>]*>([^<]+)<\/span>/i);
+    if (itempropTextMatch && itempropTextMatch[1]) {
+      price = parsePrice(itempropTextMatch[1]);
     }
   }
 
-  // Look for JSON-LD schema
+  // Extract Price from Amazon selectors
+  if (!price) {
+    const amazonOffscreen = html.match(/<span[^>]*class=["'][^"']*a-offscreen[^"']*["'][^>]*>([^<]+)<\/span>/i);
+    if (amazonOffscreen && amazonOffscreen[1]) {
+      price = parsePrice(amazonOffscreen[1]);
+    }
+  }
+  if (!price) {
+    const amazonWhole = html.match(/<span[^>]*class=["'][^"']*a-price-whole[^"']*["'][^>]*>([0-9\s\u00A0]+)<\/span>/i);
+    const amazonFraction = html.match(/<span[^>]*class=["'][^"']*a-price-fraction[^"']*["'][^>]*>([0-9]{2})<\/span>/i);
+    if (amazonWhole && amazonWhole[1]) {
+      const whole = amazonWhole[1].replace(/[^0-9]/g, '');
+      const fraction = amazonFraction && amazonFraction[1] ? amazonFraction[1] : '00';
+      price = parseFloat(`${whole}.${fraction}`);
+    }
+  }
+
+  // Extract Price from Generic E-Commerce Class Selectors
+  if (!price) {
+    const genericPriceMatch =
+      html.match(/<(?:span|div|p)[^>]*class=["'][^"']*(?:product-price|current-price|price-current|price__regular|price-item--regular|sales-price|price-now|new-price)[^"']*["'][^>]*>([^<]+)<\/(?:span|div|p)>/i) ||
+      html.match(/<(?:span|div|p)[^>]*class=["'][^"']*\bprice\b[^"']*["'][^>]*>([^<]+)<\/(?:span|div|p)>/i);
+    if (genericPriceMatch && genericPriceMatch[1]) {
+      price = parsePrice(genericPriceMatch[1]);
+    }
+  }
+
+  // Look for JSON-LD schema (handling arrays, objects, and @graph)
   try {
     const jsonLdMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
     for (const m of jsonLdMatches) {
       try {
         const data = JSON.parse(m[1].trim());
-        const product = Array.isArray(data) ? data.find(d => d['@type'] === 'Product') : (data['@type'] === 'Product' ? data : null);
+        const product = extractProductFromLdJson(data);
         if (product) {
           if (!title && product.name) title = product.name;
-          if (!imageUrl && product.image) {
-            imageUrl = Array.isArray(product.image) ? product.image[0] : (typeof product.image === 'string' ? product.image : product.image.url || '');
+          if (!imageUrl) {
+            const ldImg = extractImageFromProduct(product);
+            if (ldImg) imageUrl = ldImg;
           }
-          if (!price && product.offers) {
-            const offer = Array.isArray(product.offers) ? product.offers[0] : product.offers;
-            if (offer && offer.price) {
-              const p = parseFloat(String(offer.price).replace(',', '.'));
-              if (!isNaN(p)) price = p;
-            }
+          if (!price) {
+            const ldPrice = extractPriceFromProduct(product);
+            if (ldPrice) price = ldPrice;
           }
         }
       } catch {
-        // ignore
+        // ignore JSON-LD parse errors
       }
     }
   } catch {
     // ignore
   }
 
-  // Normalize image URL relative paths
+  // Extract Image from <link rel="image_src">
+  if (!imageUrl) {
+    const linkImg = html.match(/<link\s+[^>]*rel=["']image_src["'][^>]*href=["']([^"']*)["']/i) ||
+                    html.match(/<link\s+[^>]*href=["']([^"']*)["'][^>]*rel=["']image_src["']/i);
+    if (linkImg && linkImg[1]) {
+      imageUrl = linkImg[1].trim();
+    }
+  }
+
+  // Extract Image from Amazon high-res attributes
+  if (!imageUrl) {
+    const oldHires = html.match(/data-old-hires=["']([^"']+)["']/i);
+    if (oldHires && oldHires[1]) {
+      imageUrl = oldHires[1].trim();
+    }
+  }
+  if (!imageUrl) {
+    const landingImg = html.match(/id=["']landingImage["'][^>]*src=["']([^"']*)["']/i);
+    if (landingImg && landingImg[1]) {
+      imageUrl = landingImg[1].trim();
+    }
+  }
+  if (!imageUrl) {
+    const dynamicImg = html.match(/data-a-dynamic-image=["'](\{[^"']+\})["']/i);
+    if (dynamicImg && dynamicImg[1]) {
+      try {
+        const dynObj = JSON.parse(dynamicImg[1]);
+        const keys = Object.keys(dynObj);
+        if (keys.length > 0) imageUrl = keys[0];
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  // Extract Image from HTML Microdata or prominent product image tags
+  if (!imageUrl) {
+    const itempropImg = html.match(/<img\s+[^>]*itemprop=["']image["'][^>]*src=["']([^"']*)["']/i);
+    if (itempropImg && itempropImg[1]) {
+      imageUrl = itempropImg[1].trim();
+    }
+  }
+  if (!imageUrl) {
+    const productClassImg = html.match(/<img\s+[^>]*class=["'][^"']*(?:product-image|main-image|primary-image|detail-image)[^"']*["'][^>]*src=["']([^"']*)["']/i);
+    if (productClassImg && productClassImg[1]) {
+      imageUrl = productClassImg[1].trim();
+    }
+  }
+
+  // Filter out tracking pixels / tiny icons
+  if (imageUrl && (imageUrl.includes('1x1') || imageUrl.includes('blank.gif') || imageUrl.includes('pixel') || imageUrl.includes('spacer'))) {
+    imageUrl = '';
+  }
+
+  // Normalize relative image URLs
   if (imageUrl && !imageUrl.startsWith('http')) {
     try {
-      const parsed = new URL(originalUrl);
-      imageUrl = new URL(imageUrl, parsed.origin).href;
+      if (imageUrl.startsWith('//')) {
+        imageUrl = `https:${imageUrl}`;
+      } else {
+        const parsed = new URL(originalUrl);
+        imageUrl = new URL(imageUrl, parsed.origin).href;
+      }
     } catch {
       // ignore
     }
@@ -164,8 +394,18 @@ app.get('/api/gifts', (_req: Request, res: Response) => {
 // POST new gift
 app.post('/api/gifts', (req: Request, res: Response) => {
   const items = readDatabase();
+  const giftId = req.body.id || `gift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+  // If item already exists, update and return it
+  const existingIndex = items.findIndex(g => g.id === giftId);
+  if (existingIndex !== -1) {
+    items[existingIndex] = { ...items[existingIndex], ...req.body, id: giftId };
+    writeDatabase(items);
+    return res.json(items[existingIndex]);
+  }
+
   const newItem: GiftItem = {
-    id: `gift-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    id: giftId,
     recipient: req.body.recipient || 'Audrey',
     title: req.body.title || 'Nouvelle idée cadeau',
     description: req.body.description || '',
@@ -179,7 +419,7 @@ app.post('/api/gifts', (req: Request, res: Response) => {
     reservedBy: null,
     reservedAt: null,
     reservationNote: null,
-    isSecretIdea: Boolean(req.body.isSecretIdea),
+    isSecretIdea: (req.body.recipient === 'Zoé') ? false : true,
     addedBy: req.body.addedBy || req.body.recipient || 'Audrey',
     contributions: [],
   };
@@ -438,6 +678,8 @@ app.post('/api/scrape-link', async (req: Request, res: Response) => {
       category = 'High-Tech & Audio';
     } else if (lower.includes('jeu') || lower.includes('jouet') || lower.includes('lego') || lower.includes('puzzle') || lower.includes('societe') || lower.includes('peinture') || lower.includes('atelier')) {
       category = 'Jeux & Loisirs';
+    } else if (lower.includes('sport') || lower.includes('ski') || lower.includes('velo') || lower.includes('vélo') || lower.includes('rando') || lower.includes('randonnee') || lower.includes('randonnée') || lower.includes('camping') || lower.includes('fitness') || lower.includes('running') || lower.includes('escalade') || lower.includes('outdoor')) {
+      category = 'Sport & Outdoor';
     } else if (lower.includes('parfum') || lower.includes('creme') || lower.includes('soin') || lower.includes('beaute') || lower.includes('maquillage')) {
       category = 'Beauté & Bien-être';
     }
@@ -474,7 +716,7 @@ Réponds EXCLUSIVEMENT avec un JSON strict contenant un tableau d'objets:
     "title": "Nom précis de l'objet",
     "description": "Courte description chaleureuse en français (1 phrase)",
     "price": 45,
-    "category": "Maison & Décoration" | "High-Tech & Audio" | "Mode & Accessoires" | "Jeux & Loisirs" | "Livres & Culture" | "Beauté & Bien-être",
+    "category": "Maison & Décoration" | "High-Tech & Audio" | "Mode & Accessoires" | "Sport & Outdoor" | "Jeux & Loisirs" | "Livres & Culture" | "Beauté & Bien-être",
     "storeName": "Enseigne (ex: Nature & Découvertes, Fnac, etc.)",
     "priority": "Coup de cœur" | "Très souhaité" | "Souhaité"
   }

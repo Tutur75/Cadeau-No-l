@@ -55,6 +55,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           
           {/* Left: Festive Headline & Narrative */}
           <div className="max-w-2xl space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold text-amber-200 border border-white/15">
+              <span>🎄 Listes de Noël 2026</span>
+            </div>
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight text-balance">
               Les souhaits de Noël d'Audrey, Arthur &amp; Zoé
             </h1>

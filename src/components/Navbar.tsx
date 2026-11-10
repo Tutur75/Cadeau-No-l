@@ -30,7 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Gift className="h-5 w-5" />
           </span>
           <span className="font-serif text-xl font-bold tracking-tight text-red-950">
-            Listes de Noël
+            Listes de Noël 2026
           </span>
         </button>
 

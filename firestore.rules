@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Path variable hardening against ID injection
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Validation helper for Gift entity
+    function isValidGift(data) {
+      return data.keys().hasAll(['recipient', 'title', 'category', 'priority'])
+        && data.recipient in ['Audrey', 'Arthur', 'Zoé']
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+        && (!('price' in data) || data.price is number)
+        && data.category is string && data.category.size() <= 100
+        && data.priority in ['Coup de cœur', 'Très souhaité', 'Souhaité']
+        && (!('storeName' in data) || (data.storeName is string && data.storeName.size() <= 100))
+        && (!('url' in data) || (data.url is string && data.url.size() <= 2000))
+        && (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 500000))
+        && (!('isReserved' in data) || data.isReserved is bool)
+        && (!('reservedBy' in data) || data.reservedBy == null || (data.reservedBy is string && data.reservedBy.size() <= 100))
+        && (!('reservationNote' in data) || data.reservationNote == null || (data.reservationNote is string && data.reservationNote.size() <= 1000));
+    }
+
+    // Connection validation test path
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    // Public Christmas wishlist gifts collection (No authentication required as requested)
+    match /gifts/{giftId} {
+      allow read: if true;
+      allow create: if isValidId(giftId) && isValidGift(incoming());
+      allow update: if isValidId(giftId) && isValidGift(incoming());
+      allow delete: if isValidId(giftId);
+    }
+  }
+}

@@ -80,6 +80,7 @@ export const CATEGORIES = [
   'Maison & Décoration',
   'High-Tech & Audio',
   'Mode & Accessoires',
+  'Sport & Outdoor',
   'Jeux & Loisirs',
   'Livres & Culture',
   'Beauté & Bien-être',

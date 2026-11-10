@@ -36,7 +36,6 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
   const [priority, setPriority] = useState<'Coup de cœur' | 'Très souhaité' | 'Souhaité'>('Très souhaité');
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
-  const [isSecretIdea, setIsSecretIdea] = useState(false);
 
   // Suggestions state
   const [ideas, setIdeas] = useState<any[]>([]);
@@ -55,7 +54,6 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
       setImageUrl(initialEditGift.imageUrl || '');
       setDescription(initialEditGift.description || '');
       setUrlInput(initialEditGift.url || '');
-      setIsSecretIdea(Boolean(initialEditGift.isSecretIdea));
     } else {
       setRecipient(defaultRecipient);
       setTitle('');
@@ -66,7 +64,6 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
       setImageUrl('');
       setDescription('');
       setUrlInput('');
-      setIsSecretIdea(false);
       setScrapeError('');
     }
   }, [initialEditGift, defaultRecipient, isOpen]);
@@ -85,7 +82,9 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
     try {
       const data = await scrapeLink(urlInput.trim());
       if (data.title) setTitle(data.title);
-      if (data.price) setPrice(data.price);
+      if (data.price !== undefined && data.price !== null && data.price !== '') {
+        setPrice(data.price);
+      }
       if (data.siteName) setStoreName(data.siteName);
       if (data.imageUrl) setImageUrl(data.imageUrl);
       if (data.description) setDescription(data.description);
@@ -143,7 +142,6 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
       imageUrl: imageUrl.trim(),
       description: description.trim(),
       url: urlInput.trim(),
-      isSecretIdea,
       addedBy: recipient,
     });
 
@@ -563,21 +561,6 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
                 placeholder="Ex : Taille M, coloris beige avoine de préférence, avec ticket cadeau si possible."
                 className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 resize-none"
               />
-            </div>
-
-            {/* Secret Santa surprise suggestion checkbox */}
-            <div className="pt-1">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isSecretIdea}
-                  onChange={(e) => setIsSecretIdea(e.target.checked)}
-                  className="rounded border-stone-300 text-red-600 focus:ring-red-500"
-                />
-                <span className="text-xs text-stone-700">
-                  Ajouter comme <strong>Idée secrète</strong> (proposition surprise pour {recipient})
-                </span>
-              </label>
             </div>
           </div>
 

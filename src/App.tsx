@@ -13,6 +13,7 @@ import {
   deleteGift,
   reserveGift,
   unreserveGift,
+  subscribeToGifts,
 } from './services/api';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
@@ -23,6 +24,8 @@ import { ReserveModal } from './components/ReserveModal';
 import { GitHubModal } from './components/GitHubModal';
 import { AdminModal } from './components/AdminModal';
 import { DeleteModal } from './components/DeleteModal';
+import { SnowEffect } from './components/SnowEffect';
+import { ImageModal } from './components/ImageModal';
 
 const ADMIN_CODE_KEY = 'milirose_admin_code_v2';
 const ADMIN_SESSION_KEY = 'milirose_is_admin_v2';
@@ -33,11 +36,25 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Maison & Décoration': '🏡',
   'High-Tech & Audio': '🎧',
   'Mode & Accessoires': '🧣',
+  'Sport & Outdoor': '🎿',
   'Jeux & Loisirs': '🎲',
   'Livres & Culture': '📚',
   'Beauté & Bien-être': '✨',
   'Gastronomie': '☕',
 };
+
+// Helper to guarantee unique gifts by id across real-time sync and local states
+function deduplicateGifts(items: GiftItem[]): GiftItem[] {
+  const seen = new Set<string>();
+  const unique: GiftItem[] = [];
+  for (const item of items) {
+    if (item && item.id && !seen.has(item.id)) {
+      seen.add(item.id);
+      unique.push(item);
+    }
+  }
+  return unique;
+}
 
 export default function App() {
   const [gifts, setGifts] = useState<GiftItem[]>([]);
@@ -77,6 +94,9 @@ export default function App() {
 
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
 
+  // Zoom lightbox state for photos
+  const [zoomedGift, setZoomedGift] = useState<GiftItem | null>(null);
+
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -90,7 +110,7 @@ export default function App() {
     setIsLoading(true);
     try {
       const data = await fetchGifts();
-      setGifts(data);
+      setGifts(deduplicateGifts(data));
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +118,27 @@ export default function App() {
 
   useEffect(() => {
     loadGifts();
+
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = subscribeToGifts(
+        (realtimeGifts) => {
+          if (realtimeGifts && realtimeGifts.length > 0) {
+            setGifts(deduplicateGifts(realtimeGifts));
+            setIsLoading(false);
+          }
+        },
+        () => {
+          // Fallback silently without throwing to maintain smooth UX
+        }
+      );
+    } catch {
+      // ignore
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Admin authentication handlers: accepts "Zoé2019" or "Zoe2019"
@@ -181,11 +222,16 @@ export default function App() {
 
     if (editingGift) {
       const updated = await updateGift(editingGift.id, giftData);
-      setGifts(prev => prev.map(g => (g.id === updated.id ? updated : g)));
+      setGifts(prev => deduplicateGifts(prev.map(g => (g.id === updated.id ? updated : g))));
       showToast(`✨ « ${updated.title} » a été mis à jour.`);
     } else {
       const created = await createGift(giftData);
-      setGifts(prev => [created, ...prev]);
+      setGifts(prev => {
+        if (prev.some(g => g.id === created.id)) {
+          return prev;
+        }
+        return deduplicateGifts([created, ...prev]);
+      });
       showToast(`🎁 « ${created.title} » a été ajouté à la liste de ${created.recipient} !`);
     }
     setEditingGift(null);
@@ -234,7 +280,8 @@ export default function App() {
 
   // Filtered and sorted gifts
   const filteredGifts = useMemo(() => {
-    return gifts.filter(gift => {
+    const uniqueGifts = deduplicateGifts(gifts);
+    return uniqueGifts.filter(gift => {
       // Recipient filter
       if (filter.recipient !== 'all' && gift.recipient !== filter.recipient) {
         return false;
@@ -300,7 +347,10 @@ export default function App() {
       if (!map.has(cat)) {
         map.set(cat, []);
       }
-      map.get(cat)!.push(gift);
+      const existingInGroup = map.get(cat)!;
+      if (!existingInGroup.some(g => g.id === gift.id)) {
+        existingInGroup.push(gift);
+      }
     });
 
     map.forEach((items, category) => {
@@ -311,8 +361,10 @@ export default function App() {
   }, [filteredGifts]);
 
   return (
-    <div className="min-h-screen bg-[#faf7f5] text-stone-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
-      
+    <div className="min-h-screen bg-[#faf7f5] text-stone-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900 relative">
+      {/* Continuous Snow Falling Effect */}
+      <SnowEffect enabled={true} />
+
       {/* Navigation Header */}
       <Navbar
         currentTab={selectedRecipient}
@@ -357,7 +409,7 @@ export default function App() {
       )}
 
       {/* Main Container */}
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 relative z-10">
         
         {/* Hero Section */}
         <HeroBanner
@@ -412,8 +464,8 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+                  {/* Cards Grid: Concise 4-columns layout */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
                     {group.gifts.map(gift => (
                       <GiftCard
                         key={gift.id}
@@ -429,6 +481,7 @@ export default function App() {
                           setIsAddModalOpen(true);
                         }}
                         onDelete={promptDeleteGift}
+                        onZoomImage={setZoomedGift}
                       />
                     ))}
                   </div>
@@ -437,8 +490,8 @@ export default function App() {
               ))}
             </div>
           ) : (
-            /* Flat Grid View */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+            /* Flat Grid View: Concise 4-columns layout */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
               {filteredGifts.map(gift => (
                 <GiftCard
                   key={gift.id}
@@ -454,6 +507,7 @@ export default function App() {
                     setIsAddModalOpen(true);
                   }}
                   onDelete={promptDeleteGift}
+                  onZoomImage={setZoomedGift}
                 />
               ))}
             </div>
@@ -497,11 +551,11 @@ export default function App() {
       </main>
 
       {/* Holiday Footer */}
-      <footer className="mt-16 border-t border-rose-100/80 bg-white py-8 text-xs text-stone-500">
+      <footer className="mt-16 border-t border-rose-100/80 bg-white py-8 text-xs text-stone-500 relative z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-serif font-bold text-stone-800 text-sm">
-              Listes de Noël · Audrey, Arthur &amp; Zoé
+              Listes de Noël 2026 · Audrey, Arthur &amp; Zoé
             </span>
             <span>·</span>
             <span>Inspiré de milirose.com</span>
@@ -531,9 +585,11 @@ export default function App() {
             <button
               onClick={() => setIsGitHubModalOpen(true)}
               className="flex items-center gap-1.5 text-stone-600 hover:text-stone-950 transition-colors"
+              title="Gérer les sauvegardes, exports et la base Firebase"
             >
-              <Database className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Base locale</span>
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <Database className="h-3.5 w-3.5 text-amber-600" />
+              <span>Firebase Firestore</span>
             </button>
 
             <span>·</span>
@@ -596,6 +652,13 @@ export default function App() {
         onClose={() => setIsGitHubModalOpen(false)}
         gifts={gifts}
         onDataReload={loadGifts}
+      />
+
+      {/* Enlarged Photo Lightbox Modal */}
+      <ImageModal
+        isOpen={Boolean(zoomedGift)}
+        gift={zoomedGift}
+        onClose={() => setZoomedGift(null)}
       />
 
       {/* Toast popup */}

@@ -14,7 +14,7 @@
     "reservedBy": null,
     "reservedAt": null,
     "reservationNote": null,
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Audrey",
     "contributions": []
   },
@@ -33,7 +33,7 @@
     "reservedBy": "Arthur",
     "reservedAt": "2026-11-08T18:30:00Z",
     "reservationNote": "Commandé avec un étui de protection vert sapin !",
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Audrey",
     "contributions": []
   },
@@ -42,7 +42,7 @@
     "recipient": "Audrey",
     "title": "Coffret Thés & Infusions de Noël Bio",
     "description": "Sélection festive aux épices douces, écorces d'orange et cannelle dans une boîte illustrée collector.",
-    "price": 34.50,
+    "price": 34.5,
     "category": "Maison & Décoration",
     "priority": "Souhaité",
     "storeName": "Kusmi Tea",
@@ -52,7 +52,7 @@
     "reservedBy": null,
     "reservedAt": null,
     "reservationNote": null,
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Audrey",
     "contributions": []
   },
@@ -71,7 +71,7 @@
     "reservedBy": "Zoé",
     "reservedAt": "2026-11-07T14:15:00Z",
     "reservationNote": "Trop hâte qu'on aille tourner de la terre ensemble !",
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Audrey",
     "contributions": []
   },
@@ -90,10 +90,14 @@
     "reservedBy": null,
     "reservedAt": null,
     "reservationNote": null,
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Arthur",
     "contributions": [
-      { "name": "Maman", "amount": 60, "date": "2026-11-08T10:00:00Z" }
+      {
+        "name": "Maman",
+        "amount": 60,
+        "date": "2026-11-08T10:00:00Z"
+      }
     ]
   },
   {
@@ -111,7 +115,7 @@
     "reservedBy": "Audrey",
     "reservedAt": "2026-11-09T08:00:00Z",
     "reservationNote": "C'est dans la hotte ! Modèle Timemore Chestnut C3.",
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Arthur",
     "contributions": []
   },
@@ -120,7 +124,7 @@
     "recipient": "Arthur",
     "title": "Jeu de société 'Les Ruines Perdues de Narak'",
     "description": "Aventure, pose d'ouvriers et deck-building immersif pour 1 à 4 joueurs.",
-    "price": 44.90,
+    "price": 44.9,
     "category": "Jeux & Loisirs",
     "priority": "Souhaité",
     "storeName": "Philibert",
@@ -130,7 +134,7 @@
     "reservedBy": null,
     "reservedAt": null,
     "reservationNote": null,
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Arthur",
     "contributions": []
   },
@@ -149,7 +153,7 @@
     "reservedBy": null,
     "reservedAt": null,
     "reservationNote": null,
-    "isSecretIdea": false,
+    "isSecretIdea": true,
     "addedBy": "Arthur",
     "contributions": []
   },
@@ -177,7 +181,7 @@
     "recipient": "Zoé",
     "title": "Set d'aquarelle fine 24 demi-godets & carnet 300g",
     "description": "Boîte métallique de voyage avec pinceau aquarelle réservoir d'eau et carnet relié 100% coton.",
-    "price": 46.50,
+    "price": 46.5,
     "category": "Jeux & Loisirs",
     "priority": "Très souhaité",
     "storeName": "Rougier & Plé",

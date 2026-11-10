@@ -1,0 +1,98 @@
+{
+  "entities": {
+    "Gift": {
+      "title": "Gift",
+      "description": "Represents a Christmas holiday gift wish for Audrey, Arthur, or Zoé.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the gift"
+        },
+        "recipient": {
+          "type": "string",
+          "enum": ["Audrey", "Arthur", "Zoé"],
+          "description": "Target recipient of the gift idea"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Title or name of the gift item"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Detailed notes or description of the gift"
+        },
+        "price": {
+          "type": "number",
+          "description": "Price in euros"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Category such as Maison & Décoration, High-Tech, etc."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["Coup de cœur", "Très souhaité", "Souhaité"],
+          "description": "Level of wish"
+        },
+        "storeName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Merchant or shop name"
+        },
+        "url": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "External product URL"
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500000,
+          "description": "Image URL or data URI"
+        },
+        "isReserved": {
+          "type": "boolean",
+          "description": "Reservation status"
+        },
+        "reservedBy": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Name of the person who reserved the gift"
+        },
+        "reservedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of when the gift was reserved"
+        },
+        "reservationNote": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional note left by the person reserving the gift"
+        },
+        "isSecretIdea": {
+          "type": "boolean",
+          "description": "Whether this gift was added secretly"
+        },
+        "addedBy": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Author of the idea"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["recipient", "title", "category", "priority"]
+    }
+  },
+  "firestore": {
+    "/gifts/{giftId}": {
+      "schema": "Gift",
+      "description": "Firestore collection storing all wishlist gift ideas without account or authentication requirement."
+    }
+  }
+}
