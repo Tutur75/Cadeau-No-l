@@ -54,8 +54,6 @@ export default function App() {
 
   // View & Filter states
   const [selectedRecipient, setSelectedRecipient] = useState<FamilyMember | 'all'>('all');
-  const [viewer, setViewer] = useState<FamilyMember | 'all'>('all');
-  const [surpriseMode, setSurpriseMode] = useState(false);
   const [groupByCategory, setGroupByCategory] = useState(true);
 
   const [filter, setFilter] = useState<FilterState>({
@@ -323,14 +321,6 @@ export default function App() {
           setEditingGift(null);
           setIsAddModalOpen(true);
         }}
-        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
-        surpriseMode={surpriseMode}
-        onToggleSurpriseMode={() => {
-          setSurpriseMode(!surpriseMode);
-          showToast(!surpriseMode ? "🔒 Mode Surprise activé : réservations cachées !" : "🔓 Mode Secret désactivé");
-        }}
-        viewer={viewer}
-        onChangeViewer={setViewer}
         isAdmin={isAdmin}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
       />
@@ -428,8 +418,6 @@ export default function App() {
                       <GiftCard
                         key={gift.id}
                         gift={gift}
-                        surpriseMode={surpriseMode}
-                        viewer={viewer}
                         isAdmin={isAdmin}
                         onOpenReserveModal={item => {
                           setReservingGift(item);
@@ -455,8 +443,6 @@ export default function App() {
                 <GiftCard
                   key={gift.id}
                   gift={gift}
-                  surpriseMode={surpriseMode}
-                  viewer={viewer}
                   isAdmin={isAdmin}
                   onOpenReserveModal={item => {
                     setReservingGift(item);

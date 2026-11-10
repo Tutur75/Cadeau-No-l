@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { ExternalLink, Check, Gift, Heart, MoreVertical, Trash2, Edit3 } from 'lucide-react';
-import { GiftItem, FamilyMember, FAMILY_MEMBERS } from '../types';
+import { GiftItem, FAMILY_MEMBERS } from '../types';
 
 interface GiftCardProps {
   gift: GiftItem;
-  surpriseMode: boolean;
-  viewer: FamilyMember | 'all';
   isAdmin: boolean;
   onOpenReserveModal: (gift: GiftItem) => void;
   onUnreserve: (id: string) => void;
@@ -15,8 +13,6 @@ interface GiftCardProps {
 
 export const GiftCard: React.FC<GiftCardProps> = ({
   gift,
-  surpriseMode,
-  viewer,
   isAdmin,
   onOpenReserveModal,
   onUnreserve,
@@ -28,9 +24,9 @@ export const GiftCard: React.FC<GiftCardProps> = ({
 
   const profile = FAMILY_MEMBERS[gift.recipient];
 
-  // If surprise mode is on AND the viewer is the recipient of the gift,
-  // hide who reserved it and what note they left!
-  const isRecipientViewingSurprise = surpriseMode && viewer === gift.recipient;
+  // Mode secret : actif par défaut pour Audrey et Arthur, et JAMAIS actif pour Zoé
+  const isSecretRecipient = gift.recipient === 'Audrey' || gift.recipient === 'Arthur';
+  const isSecretActive = !isAdmin && isSecretRecipient;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl bg-white border border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-200">
@@ -174,17 +170,24 @@ export const GiftCard: React.FC<GiftCardProps> = ({
           {gift.isReserved ? (
             <div className="rounded-lg bg-emerald-50 border border-emerald-200/80 p-3 text-xs text-emerald-950">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-1.5 font-semibold text-emerald-900">
+                <div className="flex flex-wrap items-center gap-1.5 font-semibold text-emerald-900">
                   <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                  {isRecipientViewingSurprise ? (
+                  {isSecretActive ? (
                     <span>Déjà réservé pour Noël (Surprise !)</span>
                   ) : (
-                    <span>Réservé par {gift.reservedBy || 'Un proche'}</span>
+                    <>
+                      <span>Réservé par {gift.reservedBy || 'Un proche'}</span>
+                      {isAdmin && isSecretRecipient && (
+                        <span className="text-[10px] font-normal text-amber-800 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-200">
+                          Secret pour {gift.recipient}
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 
                 {/* Unreserve action */}
-                {(isAdmin || !isRecipientViewingSurprise) && (
+                {(isAdmin || !isSecretRecipient) && (
                   <button
                     onClick={() => onUnreserve(gift.id)}
                     className="text-[11px] text-emerald-700 hover:text-emerald-900 underline underline-offset-2 shrink-0"
@@ -195,7 +198,7 @@ export const GiftCard: React.FC<GiftCardProps> = ({
                 )}
               </div>
 
-              {!isRecipientViewingSurprise && gift.reservationNote && (
+              {!isSecretActive && gift.reservationNote && (
                 <p className="mt-1.5 text-[11px] text-emerald-800/90 italic">
                   « {gift.reservationNote} »
                 </p>

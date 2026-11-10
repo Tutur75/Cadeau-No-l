@@ -1,16 +1,11 @@
 import React from 'react';
-import { Gift, Sparkles, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
+import { Gift, Sparkles, Lock, Unlock } from 'lucide-react';
 import { FamilyMember } from '../types';
 
 interface NavbarProps {
   currentTab: FamilyMember | 'all';
   onSelectTab: (tab: FamilyMember | 'all') => void;
   onOpenAddModal: () => void;
-  onOpenGitHubModal: () => void;
-  surpriseMode: boolean;
-  onToggleSurpriseMode: () => void;
-  viewer: FamilyMember | 'all';
-  onChangeViewer: (viewer: FamilyMember | 'all') => void;
   isAdmin: boolean;
   onOpenAdminModal: () => void;
 }
@@ -19,8 +14,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onSelectTab,
   onOpenAddModal,
-  surpriseMode,
-  onToggleSurpriseMode,
   isAdmin,
   onOpenAdminModal,
 }) => {
@@ -88,20 +81,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Zone 3: Primary Action & Utilities */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           
-          {/* Surprise Mode toggle */}
-          <button
-            onClick={onToggleSurpriseMode}
-            title={surpriseMode ? "Mode Surprise actif (les réservations sont masquées pour préserver le mystère)" : "Mode Secret (voir qui a réservé quoi)"}
-            className={`hidden sm:flex items-center gap-1.5 h-9 px-2.5 rounded-lg border text-xs font-medium transition-all ${
-              surpriseMode
-                ? 'border-purple-200 bg-purple-50 text-purple-700 shadow-xs'
-                : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
-            }`}
-          >
-            {surpriseMode ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            <span className="whitespace-nowrap hidden lg:inline">{surpriseMode ? "Mode Surprise" : "Mode Secret"}</span>
-          </button>
-
           {/* Admin / Visitor Lock Switcher */}
           <button
             onClick={onOpenAdminModal}
