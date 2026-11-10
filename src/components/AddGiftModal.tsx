@@ -247,23 +247,38 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
               Destinataire du souhait :
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(['Audrey', 'Arthur', 'Zoé'] as FamilyMember[]).map((name) => (
-                <button
-                  type="button"
-                  key={name}
-                  onClick={() => {
-                    setRecipient(name);
-                    if (activeTab === 'ideas') handleLoadIdeas(name);
-                  }}
-                  className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all ${
-                    recipient === name
-                      ? 'border-stone-900 bg-stone-900 text-white shadow-xs'
-                      : 'border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100'
-                  }`}
-                >
-                  <span>{name}</span>
-                </button>
-              ))}
+              {(['Audrey', 'Arthur', 'Zoé'] as FamilyMember[]).map((name) => {
+                const colors = {
+                  Audrey: {
+                    active: 'border-purple-600 bg-purple-600 text-white shadow-xs',
+                    inactive: 'border-purple-200 bg-purple-50/60 text-purple-700 hover:bg-purple-100',
+                  },
+                  Arthur: {
+                    active: 'border-blue-600 bg-blue-600 text-white shadow-xs',
+                    inactive: 'border-blue-200 bg-blue-50/60 text-blue-700 hover:bg-blue-100',
+                  },
+                  Zoé: {
+                    active: 'border-pink-500 bg-pink-500 text-white shadow-xs',
+                    inactive: 'border-pink-200 bg-pink-50/60 text-pink-700 hover:bg-pink-100',
+                  },
+                }[name];
+
+                return (
+                  <button
+                    type="button"
+                    key={name}
+                    onClick={() => {
+                      setRecipient(name);
+                      if (activeTab === 'ideas') handleLoadIdeas(name);
+                    }}
+                    className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                      recipient === name ? colors.active : colors.inactive
+                    }`}
+                  >
+                    <span>{name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

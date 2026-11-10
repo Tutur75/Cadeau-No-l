@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Gift } from 'lucide-react';
-import { GiftItem } from '../types';
+import { GiftItem, FAMILY_MEMBERS } from '../types';
 import confetti from 'canvas-confetti';
 
 interface ReserveModalProps {
@@ -28,6 +28,8 @@ export const ReserveModal: React.FC<ReserveModalProps> = ({
   }, [isOpen, gift]);
 
   if (!isOpen || !gift) return null;
+
+  const profile = FAMILY_MEMBERS[gift.recipient];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +61,21 @@ export const ReserveModal: React.FC<ReserveModalProps> = ({
       <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl border border-stone-200 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-gradient-to-r from-red-50/60 to-stone-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-gradient-to-r from-stone-50 to-white">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-700 text-white shadow-xs">
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs"
+              style={{ backgroundColor: profile.accentColor }}
+            >
               <Gift className="h-5 w-5" />
             </span>
             <div>
               <h2 className="font-serif text-lg font-bold text-stone-900">
                 Offrir ce cadeau
               </h2>
-              <p className="text-xs text-stone-500">Pour {gift.recipient}</p>
+              <p className="text-xs font-semibold text-stone-600">
+                Pour <span className={profile.fontColorClass}>{gift.recipient}</span>
+              </p>
             </div>
           </div>
 
@@ -149,7 +156,7 @@ export const ReserveModal: React.FC<ReserveModalProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white text-xs sm:text-sm font-semibold shadow-md transition-all active:scale-98 disabled:opacity-50"
+              className={`px-5 py-2.5 rounded-xl ${profile.buttonCardClass} text-xs sm:text-sm font-semibold shadow-md transition-all active:scale-98 disabled:opacity-50`}
             >
               {submitting ? 'Validation...' : 'Confirmer la réservation 🎁'}
             </button>

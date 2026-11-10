@@ -33,6 +33,7 @@ const DEFAULT_ADMIN_CODE = 'Zoé2019';
 
 // Category icons / badges
 const CATEGORY_EMOJIS: Record<string, string> = {
+  'Poupées': '🪆',
   'Maison & Décoration': '🏡',
   'High-Tech & Audio': '🎧',
   'Mode & Accessoires': '🧣',

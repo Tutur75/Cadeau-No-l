@@ -1,4 +1,5 @@
 import { GiftItem } from '../types';
+import defaultWishlist from '../../data/wishlist.json';
 import {
   getGiftsFromFirestore,
   saveGiftToFirestore,
@@ -20,30 +21,28 @@ export async function fetchGifts(): Promise<GiftItem[]> {
       return firestoreGifts;
     }
 
-    // If Firestore is empty on very first load, seed with server default wishlist
-    const res = await fetch('/api/gifts');
-    if (res.ok) {
-      const initialData: GiftItem[] = await res.json();
-      if (initialData.length > 0) {
-        // Seed into Firestore asynchronously so they are stored in Firebase
-        for (const item of initialData) {
-          saveGiftToFirestore(item).catch(() => {});
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-        return initialData;
+    // If Firestore is empty on initial load, seed with bundled wishlist
+    const bundledData = defaultWishlist as GiftItem[];
+    if (bundledData.length > 0) {
+      for (const item of bundledData) {
+        saveGiftToFirestore(item).catch(() => {});
       }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(bundledData));
+      return bundledData;
     }
   } catch (err) {
     console.warn('Firestore fetch failed, checking server/cache fallback:', err);
   }
 
-  // 2. Server API fallback
+  // 2. Server API fallback (when running with Express backend)
   try {
     const res = await fetch('/api/gifts');
     if (res.ok) {
       const data = await res.json();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      return data;
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        return data;
+      }
     }
   } catch (err) {
     console.warn('API fetch failed, falling back to local storage cache:', err);
@@ -53,12 +52,17 @@ export async function fetchGifts(): Promise<GiftItem[]> {
   const cached = localStorage.getItem(STORAGE_KEY);
   if (cached) {
     try {
-      return JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
     } catch {
       // ignore
     }
   }
-  return [];
+
+  // 4. Ultimate bundled fallback (guarantees gifts are always visible even completely offline)
+  return (defaultWishlist as GiftItem[]) || [];
 }
 
 export async function createGift(giftData: Partial<GiftItem>): Promise<GiftItem> {

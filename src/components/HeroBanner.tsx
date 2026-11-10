@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gift, CheckCircle2, ArrowRight } from 'lucide-react';
 import { FamilyMember, GiftItem, FAMILY_MEMBERS } from '../types';
+import heroFestiveImg from '../assets/images/hero_christmas_festive_1794241165301.jpg';
 
 interface HeroBannerProps {
   gifts: GiftItem[];
@@ -39,7 +40,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Background imagery with measured contrast scrim */}
       <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
         <img
-          src="/src/assets/images/hero_christmas_festive_1794241165301.jpg"
+          src={heroFestiveImg}
           alt="Ambiance festive de Noël"
           className="h-full w-full object-cover"
           referrerPolicy="no-referrer"
@@ -99,27 +100,48 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               const stats = getMemberStats(name);
               const isSelected = selectedRecipient === name;
 
+              const memberColors = {
+                Audrey: {
+                  avatar: 'bg-purple-600 text-white',
+                  ring: 'ring-2 ring-purple-400',
+                  activeText: 'text-purple-900',
+                  hoverBg: 'hover:bg-purple-950/30',
+                },
+                Arthur: {
+                  avatar: 'bg-blue-600 text-white',
+                  ring: 'ring-2 ring-blue-400',
+                  activeText: 'text-blue-900',
+                  hoverBg: 'hover:bg-blue-950/30',
+                },
+                Zoé: {
+                  avatar: 'bg-pink-500 text-white',
+                  ring: 'ring-2 ring-pink-400',
+                  activeText: 'text-pink-900',
+                  hoverBg: 'hover:bg-pink-950/30',
+                },
+              }[name];
+
               return (
                 <button
                   key={name}
                   onClick={() => onSelectRecipient(isSelected ? 'all' : name)}
                   className={`group relative flex flex-col items-center p-3.5 sm:p-4 rounded-xl text-center transition-all duration-200 backdrop-blur-md border ${
                     isSelected
-                      ? 'bg-white text-stone-900 border-white shadow-lg ring-2 ring-amber-400 scale-[1.03]'
-                      : 'bg-white/10 hover:bg-white/15 text-white border-white/10 hover:border-white/20'
+                      ? `bg-white ${memberColors.ring} shadow-lg scale-[1.03] border-white`
+                      : `bg-white/10 ${memberColors.hoverBg} text-white border-white/10 hover:border-white/20`
                   }`}
                 >
                   <div
                     className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full font-serif text-sm sm:text-base font-bold shadow-xs mb-2 transition-transform group-hover:scale-105 ${
                       isSelected
-                        ? 'bg-red-800 text-white'
+                        ? memberColors.avatar
                         : 'bg-white/20 text-white border border-white/20'
                     }`}
                   >
                     {profile.avatarText}
                   </div>
 
-                  <span className={`text-sm sm:text-base font-semibold leading-tight ${isSelected ? 'text-stone-900' : 'text-white'}`}>
+                  <span className={`text-sm sm:text-base font-bold leading-tight ${isSelected ? memberColors.activeText : 'text-white'}`}>
                     {name}
                   </span>
 

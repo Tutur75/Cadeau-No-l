@@ -48,30 +48,30 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => onSelectTab('Audrey')}
-            className={`whitespace-nowrap shrink-0 transition-colors ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
               currentTab === 'Audrey'
-                ? 'text-rose-700 font-semibold border-b-2 border-rose-600 pb-1'
-                : 'text-stone-600 hover:text-rose-700'
+                ? 'text-purple-700 font-bold border-b-2 border-purple-600 pb-1'
+                : 'text-stone-600 hover:text-purple-700'
             }`}
           >
             Audrey
           </button>
           <button
             onClick={() => onSelectTab('Arthur')}
-            className={`whitespace-nowrap shrink-0 transition-colors ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
               currentTab === 'Arthur'
-                ? 'text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-1'
-                : 'text-stone-600 hover:text-emerald-700'
+                ? 'text-blue-700 font-bold border-b-2 border-blue-600 pb-1'
+                : 'text-stone-600 hover:text-blue-700'
             }`}
           >
             Arthur
           </button>
           <button
             onClick={() => onSelectTab('Zoé')}
-            className={`whitespace-nowrap shrink-0 transition-colors ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
               currentTab === 'Zoé'
-                ? 'text-amber-700 font-semibold border-b-2 border-amber-600 pb-1'
-                : 'text-stone-600 hover:text-amber-700'
+                ? 'text-pink-600 font-bold border-b-2 border-pink-500 pb-1'
+                : 'text-stone-600 hover:text-pink-600'
             }`}
           >
             Zoé

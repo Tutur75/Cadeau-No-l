@@ -65,14 +65,14 @@ export const GiftCard: React.FC<GiftCardProps> = ({
           </div>
         )}
 
-        {/* Recipient Marker: Displays just "Audrey", "Arthur", or "Zoé" */}
+        {/* Recipient Marker: Displays just "Audrey", "Arthur", or "Zoé" with designated colors */}
         <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-md shadow-xs text-[11px] font-semibold text-stone-800 border border-stone-200/60">
+          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md backdrop-blur-md shadow-xs text-[11px] font-bold border ${profile.badgeClass}`}>
             <span
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: profile.accentColor }}
             />
-            <span>{gift.recipient}</span>
+            <span className={profile.fontColorClass}>{gift.recipient}</span>
           </span>
         </div>
 
@@ -217,10 +217,10 @@ export const GiftCard: React.FC<GiftCardProps> = ({
             </div>
           ) : (
             <div>
-              {/* Prominent single RESERVER button for visitors and family */}
+              {/* Prominent recipient-themed RESERVER button */}
               <button
                 onClick={() => onOpenReserveModal(gift)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white text-xs font-bold tracking-wide shadow-xs transition-all active:scale-98"
+                className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg ${profile.buttonCardClass} text-xs font-bold tracking-wide shadow-xs transition-all active:scale-98`}
               >
                 <Gift className="h-3.5 w-3.5" />
                 <span>RÉSERVER</span>

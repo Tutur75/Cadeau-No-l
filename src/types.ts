@@ -45,6 +45,9 @@ export interface MemberProfile {
   accentColor: string;
   bgLight: string;
   badgeClass: string;
+  fontColorClass: string;
+  buttonActiveClass: string;
+  buttonCardClass: string;
   tagline: string;
 }
 
@@ -52,31 +55,41 @@ export const FAMILY_MEMBERS: Record<FamilyMember, MemberProfile> = {
   Audrey: {
     name: 'Audrey',
     avatarText: 'AU',
-    accentColor: '#b91c1c', // deep festive red
-    bgLight: 'bg-rose-50 border-rose-200 text-rose-900',
-    badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+    accentColor: '#9333ea', // Violet
+    bgLight: 'bg-purple-50 border-purple-200 text-purple-900',
+    badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+    fontColorClass: 'text-purple-700',
+    buttonActiveClass: 'bg-purple-600 hover:bg-purple-700 text-white',
+    buttonCardClass: 'bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white',
     tagline: 'Cocooning, littérature, thés & élégance',
   },
   Arthur: {
     name: 'Arthur',
     avatarText: 'AR',
-    accentColor: '#047857', // pine green
-    bgLight: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    accentColor: '#2563eb', // Bleu
+    bgLight: 'bg-blue-50 border-blue-200 text-blue-900',
+    badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+    fontColorClass: 'text-blue-700',
+    buttonActiveClass: 'bg-blue-600 hover:bg-blue-700 text-white',
+    buttonCardClass: 'bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-sky-800 text-white',
     tagline: 'High-tech audio, café de spécialité & jeux',
   },
   Zoé: {
     name: 'Zoé',
     avatarText: 'ZO',
-    accentColor: '#d97706', // warm amber gold
-    bgLight: 'bg-amber-50 border-amber-200 text-amber-900',
-    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
-    tagline: 'Créativité, photo instantanée, déco & BD',
+    accentColor: '#ec4899', // Rose
+    bgLight: 'bg-pink-50 border-pink-200 text-pink-900',
+    badgeClass: 'bg-pink-100 text-pink-800 border-pink-200',
+    fontColorClass: 'text-pink-600',
+    buttonActiveClass: 'bg-pink-500 hover:bg-pink-600 text-white',
+    buttonCardClass: 'bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white',
+    tagline: 'Poupées, créativité, photo instantanée, déco & BD',
   },
 };
 
 export const CATEGORIES = [
   'Toutes les catégories',
+  'Poupées',
   'Maison & Décoration',
   'High-Tech & Audio',
   'Mode & Accessoires',
