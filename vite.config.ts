@@ -4,8 +4,10 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
+  const base = process.env.VITE_BASE_PATH || (process.env.NODE_ENV === 'production' ? './' : '/');
+
   return {
-    base: '/Cadeau-No-l/',
+    base,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

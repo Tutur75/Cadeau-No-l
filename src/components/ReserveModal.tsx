@@ -136,12 +136,12 @@ export const ReserveModal: React.FC<ReserveModalProps> = ({
           </div>
 
           {gift.recipient === 'Zoé' ? (
-            <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200/60 text-[11px] text-emerald-900 leading-relaxed">
+            <div className="p-3 rounded-lg bg-pink-50/80 border border-pink-200 text-[11px] text-pink-950 leading-relaxed">
               🎁 <strong>Liste de Zoé :</strong> Le mode secret n'est pas actif pour Zoé. Votre prénom sera visible directement sur sa liste pour savoir qui offre ce cadeau !
             </div>
           ) : (
-            <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 leading-relaxed">
-              🤫 <strong>Mode Secret actif pour {gift.recipient} :</strong> La réservation reste une surprise sur la liste publique pour préserver la magie sous le sapin !
+            <div className="p-3 rounded-lg bg-purple-50/80 border border-purple-200 text-[11px] text-purple-950 leading-relaxed">
+              🤫 <strong>Mode Secret actif pour <span className={profile.fontColorClass}>{gift.recipient}</span> :</strong> La réservation reste une surprise sur la liste publique pour préserver la magie sous le sapin !
             </div>
           )}
 

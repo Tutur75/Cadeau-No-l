@@ -2,6 +2,7 @@ import React from 'react';
 import { Gift, CheckCircle2, ArrowRight } from 'lucide-react';
 import { FamilyMember, GiftItem, FAMILY_MEMBERS } from '../types';
 import heroFestiveImg from '../assets/images/hero_christmas_festive_1794241165301.jpg';
+import zoePhoto from '../assets/images/zoe_photo.jpeg';
 
 interface HeroBannerProps {
   gifts: GiftItem[];
@@ -94,69 +95,102 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           </div>
 
           {/* Right: Interactive Family Member Selector Cards */}
-          <div className="grid grid-cols-3 sm:grid-cols-3 gap-3 shrink-0 lg:max-w-md">
-            {(['Audrey', 'Arthur', 'Zoé'] as FamilyMember[]).map((name) => {
-              const profile = FAMILY_MEMBERS[name];
-              const stats = getMemberStats(name);
-              const isSelected = selectedRecipient === name;
+          <div className="flex flex-col gap-2.5 shrink-0 lg:max-w-md">
+            <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+              {(['Audrey', 'Arthur', 'Zoé'] as FamilyMember[]).map((name) => {
+                const profile = FAMILY_MEMBERS[name];
+                const stats = getMemberStats(name);
+                const isSelected = selectedRecipient === name;
 
-              const memberColors = {
-                Audrey: {
-                  avatar: 'bg-purple-600 text-white',
-                  ring: 'ring-2 ring-purple-400',
-                  activeText: 'text-purple-900',
-                  hoverBg: 'hover:bg-purple-950/30',
-                },
-                Arthur: {
-                  avatar: 'bg-blue-600 text-white',
-                  ring: 'ring-2 ring-blue-400',
-                  activeText: 'text-blue-900',
-                  hoverBg: 'hover:bg-blue-950/30',
-                },
-                Zoé: {
-                  avatar: 'bg-pink-500 text-white',
-                  ring: 'ring-2 ring-pink-400',
-                  activeText: 'text-pink-900',
-                  hoverBg: 'hover:bg-pink-950/30',
-                },
-              }[name];
+                const memberColors = {
+                  Audrey: {
+                    avatar: 'bg-purple-600 text-white',
+                    ring: 'ring-2 ring-purple-400',
+                    activeText: 'text-purple-900',
+                    hoverBg: 'hover:bg-purple-950/30',
+                  },
+                  Arthur: {
+                    avatar: 'bg-blue-600 text-white',
+                    ring: 'ring-2 ring-blue-400',
+                    activeText: 'text-blue-900',
+                    hoverBg: 'hover:bg-blue-950/30',
+                  },
+                  Zoé: {
+                    avatar: 'bg-pink-500 text-white',
+                    ring: 'ring-2 ring-pink-400',
+                    activeText: 'text-pink-900',
+                    hoverBg: 'hover:bg-pink-950/30',
+                  },
+                }[name];
 
-              return (
-                <button
-                  key={name}
-                  onClick={() => onSelectRecipient(isSelected ? 'all' : name)}
-                  className={`group relative flex flex-col items-center p-3.5 sm:p-4 rounded-xl text-center transition-all duration-200 backdrop-blur-md border ${
-                    isSelected
-                      ? `bg-white ${memberColors.ring} shadow-lg scale-[1.03] border-white`
-                      : `bg-white/10 ${memberColors.hoverBg} text-white border-white/10 hover:border-white/20`
-                  }`}
-                >
-                  <div
-                    className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full font-serif text-sm sm:text-base font-bold shadow-xs mb-2 transition-transform group-hover:scale-105 ${
+                return (
+                  <button
+                    key={name}
+                    onClick={() => onSelectRecipient(isSelected ? 'all' : name)}
+                    className={`group relative flex flex-col items-center p-3.5 sm:p-4 rounded-xl text-center transition-all duration-200 backdrop-blur-md border ${
                       isSelected
-                        ? memberColors.avatar
-                        : 'bg-white/20 text-white border border-white/20'
+                        ? `bg-white ${memberColors.ring} shadow-lg scale-[1.03] border-white`
+                        : `bg-white/10 ${memberColors.hoverBg} text-white border-white/10 hover:border-white/20`
                     }`}
                   >
-                    {profile.avatarText}
-                  </div>
+                    <div
+                      className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full font-serif text-sm sm:text-base font-bold shadow-xs mb-2 transition-transform group-hover:scale-105 overflow-hidden ${
+                        isSelected
+                          ? memberColors.avatar
+                          : 'bg-white/20 text-white border border-white/20'
+                      }`}
+                    >
+                      {name === 'Zoé' ? (
+                        <img
+                          src={zoePhoto}
+                          alt="Zoé"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        profile.avatarText
+                      )}
+                    </div>
 
-                  <span className={`text-sm sm:text-base font-bold leading-tight ${isSelected ? memberColors.activeText : 'text-white'}`}>
-                    {name}
-                  </span>
-
-                  <span className={`text-[11px] mt-1 tabular-nums ${isSelected ? 'text-stone-600' : 'text-rose-200/80'}`}>
-                    {stats.total} {stats.total > 1 ? 'idées' : 'idée'}
-                  </span>
-
-                  {stats.reserved > 0 && (
-                    <span className={`text-[10px] font-medium mt-0.5 ${isSelected ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                      {stats.reserved} {stats.reserved > 1 ? 'réservés' : 'réservé'}
+                    <span className={`text-sm sm:text-base font-bold leading-tight ${isSelected ? memberColors.activeText : 'text-white'}`}>
+                      {name}
                     </span>
-                  )}
-                </button>
-              );
-            })}
+
+                    <span className={`text-[11px] mt-1 tabular-nums ${isSelected ? 'text-stone-600' : 'text-rose-200/80'}`}>
+                      {stats.total} {stats.total > 1 ? 'idées' : 'idée'}
+                    </span>
+
+                    {stats.reserved > 0 && (
+                      <span className={`text-[10px] font-medium mt-0.5 ${isSelected ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                        {stats.reserved} {stats.reserved > 1 ? 'réservés' : 'réservé'}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Photo de Zoé placée en dessous du bouton Zoé */}
+            <div className="flex justify-end pr-1">
+              <button
+                type="button"
+                onClick={() => onSelectRecipient('Zoé')}
+                className="group/zoepic flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md transition-all shadow-sm text-left hover:scale-[1.02]"
+                title="Afficher la liste de souhaits de Zoé"
+              >
+                <img
+                  src={zoePhoto}
+                  alt="Photo de Zoé"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-pink-400 ring-2 ring-pink-500/30 shadow-xs"
+                />
+                <div className="text-[11px] leading-tight">
+                  <span className="font-bold text-pink-200 group-hover/zoepic:text-pink-100 flex items-center gap-1">
+                    <span>Zoé</span>
+                    <span className="text-[10px]">✨</span>
+                  </span>
+                  <span className="text-white/70 block text-[10px]">Voir sa hotte</span>
+                </div>
+              </button>
+            </div>
           </div>
 
         </div>

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { X, ExternalLink, Gift, ZoomIn } from 'lucide-react';
-import { GiftItem } from '../types';
+import { X, ExternalLink, Gift, ZoomIn, Heart } from 'lucide-react';
+import { GiftItem, FAMILY_MEMBERS } from '../types';
 
 interface ImageModalProps {
   gift: GiftItem | null;
@@ -21,6 +21,8 @@ export const ImageModal: React.FC<ImageModalProps> = ({ gift, isOpen, onClose })
 
   if (!isOpen || !gift || !gift.imageUrl) return null;
 
+  const profile = FAMILY_MEMBERS[gift.recipient];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/80 backdrop-blur-sm animate-fade-in"
@@ -33,15 +35,28 @@ export const ImageModal: React.FC<ImageModalProps> = ({ gift, isOpen, onClose })
         {/* Header bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-stone-100 bg-stone-50/90 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 pr-4">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white shadow-xs shrink-0">
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-xs shrink-0"
+              style={{ backgroundColor: profile.accentColor }}
+            >
               <Gift className="h-4 w-4" />
             </span>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-stone-900 truncate">
                 {gift.title}
               </h3>
-              <div className="flex items-center gap-2 text-xs text-stone-500">
-                <span className="font-semibold text-rose-700">Pour {gift.recipient}</span>
+              <div className="flex items-center gap-2 text-xs text-stone-500 flex-wrap">
+                <span className={`font-bold ${profile.fontColorClass}`}>Pour {gift.recipient}</span>
+                <span>·</span>
+                <span className={`inline-flex items-center gap-1 font-bold ${
+                  gift.priority === 'Coup de cœur'
+                    ? 'text-rose-600'
+                    : gift.priority === 'Très souhaité'
+                    ? 'text-amber-600'
+                    : 'text-stone-600'
+                }`}>
+                  {gift.priority === 'Coup de cœur' ? '❤️ Coup de cœur' : gift.priority === 'Très souhaité' ? '⭐ Très souhaité' : '🎁 Souhaité'}
+                </span>
                 {gift.price > 0 && (
                   <>
                     <span>·</span>

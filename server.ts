@@ -196,7 +196,13 @@ function getSmartFallbackImage(title: string, category: string): string {
     return 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80';
   }
 
+  if (t.includes('poupée') || t.includes('poupee') || t.includes('barbie') || t.includes('peluche') || t.includes('doll') || t.includes('doudou') || t.includes('poupon')) {
+    return 'https://images.unsplash.com/photo-1558877385-81a1c7e67d72?auto=format&fit=crop&w=800&q=80';
+  }
+
   switch (category) {
+    case 'Poupées':
+      return 'https://images.unsplash.com/photo-1558877385-81a1c7e67d72?auto=format&fit=crop&w=800&q=80';
     case 'Sport & Outdoor':
       return 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80';
     case 'High-Tech & Audio':
@@ -670,7 +676,9 @@ app.post('/api/scrape-link', async (req: Request, res: Response) => {
     // Auto-categorize
     let category = 'Maison & Décoration';
     const lower = `${title} ${description} ${parsedUrl.pathname}`.toLowerCase();
-    if (lower.includes('livre') || lower.includes('roman') || lower.includes('bd') || lower.includes('manga') || lower.includes('book')) {
+    if (lower.includes('poupée') || lower.includes('poupee') || lower.includes('barbie') || lower.includes('peluche') || lower.includes('doll') || lower.includes('doudou') || lower.includes('poupon')) {
+      category = 'Poupées';
+    } else if (lower.includes('livre') || lower.includes('roman') || lower.includes('bd') || lower.includes('manga') || lower.includes('book')) {
       category = 'Livres & Culture';
     } else if (lower.includes('pull') || lower.includes('veste') || lower.includes('chaussure') || lower.includes('echarpe') || lower.includes('mode') || lower.includes('sac') || lower.includes('robe')) {
       category = 'Mode & Accessoires';
