@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Link2, Sparkles, Plus, Image as ImageIcon, Loader2, Upload, Trash2, ExternalLink } from 'lucide-react';
 import { FamilyMember, GiftItem, CATEGORIES } from '../types';
+import { MEMBER_AVATARS } from '../assets/avatars';
 import { scrapeLink, getAiSuggestions } from '../services/api';
 import confetti from 'canvas-confetti';
 
@@ -27,6 +28,7 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
   const [urlInput, setUrlInput] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeError, setScrapeError] = useState('');
+  const [scrapeSuccess, setScrapeSuccess] = useState('');
   
   const [recipient, setRecipient] = useState<FamilyMember>(defaultRecipient);
   const [title, setTitle] = useState('');
@@ -65,6 +67,7 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
       setDescription('');
       setUrlInput('');
       setScrapeError('');
+      setScrapeSuccess('');
     }
   }, [initialEditGift, defaultRecipient, isOpen]);
 
@@ -74,23 +77,26 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
   const handleScrape = async () => {
     if (!urlInput.trim()) {
       setScrapeError('Veuillez entrer une adresse URL');
+      setScrapeSuccess('');
       return;
     }
     setIsScraping(true);
     setScrapeError('');
+    setScrapeSuccess('');
 
     try {
       const data = await scrapeLink(urlInput.trim());
       if (data.title) setTitle(data.title);
-      if (data.price !== undefined && data.price !== null && data.price !== '') {
+      if (data.price !== undefined && data.price !== null && data.price !== '' && Number(data.price) > 0) {
         setPrice(data.price);
       }
       if (data.siteName) setStoreName(data.siteName);
       if (data.imageUrl) setImageUrl(data.imageUrl);
       if (data.description) setDescription(data.description);
       if (data.category) setCategory(data.category);
+      setScrapeSuccess('✨ Informations récupérées ! Vérifiez et ajustez les détails ci-dessous.');
     } catch (err: any) {
-      setScrapeError(err.message || 'Impossible d\'analyser le lien, veuillez remplir les détails ci-dessous.');
+      setScrapeError(err.message || 'Impossible d\'analyser le lien, vous pouvez remplir les champs manuellement.');
     } finally {
       setIsScraping(false);
     }
@@ -271,10 +277,15 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
                       setRecipient(name);
                       if (activeTab === 'ideas') handleLoadIdeas(name);
                     }}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                    className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
                       recipient === name ? colors.active : colors.inactive
                     }`}
                   >
+                    <img
+                      src={MEMBER_AVATARS[name]}
+                      alt={name}
+                      className="h-5 w-5 rounded-full object-cover border border-white/60 shadow-2xs shrink-0"
+                    />
                     <span>{name}</span>
                   </button>
                 );
@@ -319,6 +330,10 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
 
               {scrapeError && (
                 <p className="text-xs text-rose-600 leading-relaxed">{scrapeError}</p>
+              )}
+
+              {scrapeSuccess && (
+                <p className="text-xs text-emerald-700 font-medium leading-relaxed">{scrapeSuccess}</p>
               )}
 
               {title && (

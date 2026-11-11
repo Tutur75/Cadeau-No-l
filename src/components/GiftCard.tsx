@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ExternalLink, Check, Gift, Heart, MoreVertical, Trash2, Edit3, ZoomIn } from 'lucide-react';
 import { GiftItem, FAMILY_MEMBERS } from '../types';
+import { MEMBER_AVATARS } from '../assets/avatars';
 
 interface GiftCardProps {
   gift: GiftItem;
@@ -65,12 +66,13 @@ export const GiftCard: React.FC<GiftCardProps> = ({
           </div>
         )}
 
-        {/* Recipient Marker: Displays just "Audrey", "Arthur", or "Zoé" with designated colors */}
+        {/* Recipient Marker: Displays Audrey, Arthur, or Zoé with photo and designated color */}
         <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md backdrop-blur-md shadow-xs text-[11px] font-bold border ${profile.badgeClass}`}>
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: profile.accentColor }}
+          <span className={`inline-flex items-center gap-1.5 pl-1 pr-2 py-0.5 rounded-full backdrop-blur-md shadow-xs text-[11px] font-bold border bg-white/95 ${profile.badgeClass}`}>
+            <img
+              src={MEMBER_AVATARS[gift.recipient]}
+              alt={gift.recipient}
+              className="h-4 w-4 rounded-full object-cover border border-white shrink-0 shadow-2xs"
             />
             <span className={profile.fontColorClass}>{gift.recipient}</span>
           </span>

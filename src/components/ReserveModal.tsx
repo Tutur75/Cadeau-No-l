@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Gift } from 'lucide-react';
 import { GiftItem, FAMILY_MEMBERS } from '../types';
+import { MEMBER_AVATARS } from '../assets/avatars';
 import confetti from 'canvas-confetti';
 
 interface ReserveModalProps {
@@ -63,12 +64,12 @@ export const ReserveModal: React.FC<ReserveModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 bg-gradient-to-r from-stone-50 to-white">
           <div className="flex items-center gap-2.5">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-xs"
-              style={{ backgroundColor: profile.accentColor }}
-            >
-              <Gift className="h-5 w-5" />
-            </span>
+            <img
+              src={MEMBER_AVATARS[gift.recipient]}
+              alt={gift.recipient}
+              className="h-9 w-9 rounded-full object-cover border-2 shadow-xs shrink-0"
+              style={{ borderColor: profile.accentColor }}
+            />
             <div>
               <h2 className="font-serif text-lg font-bold text-stone-900">
                 Offrir ce cadeau

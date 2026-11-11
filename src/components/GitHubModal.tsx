@@ -220,6 +220,16 @@ git push -u origin main`;
                   className="hidden"
                 />
               </label>
+
+              <a
+                href="https://console.firebase.google.com/project/gen-lang-client-0828011138/firestore/databases/ai-studio-listesdenolaudre-ed0b2850-ca8e-4c35-ab77-578d39888f1d/data?openUpgradeDialog=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 border border-amber-300 text-xs font-semibold text-amber-900 transition-colors"
+              >
+                <span>Console Firebase &amp; Quotas</span>
+                <span className="text-[10px]">↗</span>
+              </a>
             </div>
 
             {importMessage && (

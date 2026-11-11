@@ -629,6 +629,40 @@ app.post('/api/scrape-link', async (req: Request, res: Response) => {
     let price: number | null = null;
     let siteName = domain;
 
+    // Extract Amazon ASIN if present
+    const amazonAsin = extractAmazonAsin(parsedUrl.href);
+
+    // Map common domains to friendly store names
+    const STORE_NAMES: Record<string, string> = {
+      'amazon.fr': 'Amazon',
+      'amazon.com': 'Amazon',
+      'fnac.com': 'Fnac',
+      'cultura.com': 'Cultura',
+      'decathlon.fr': 'Decathlon',
+      'sephora.fr': 'Sephora',
+      'zara.com': 'Zara',
+      'boulanger.com': 'Boulanger',
+      'darty.com': 'Darty',
+      'ikea.com': 'IKEA',
+      'natureetdecouvertes.com': 'Nature & Découvertes',
+      'rougier-ple.fr': 'Rougier & Plé',
+      'philibertnet.com': 'Philibert',
+      'etsy.com': 'Etsy',
+      'king-jouet.com': 'King Jouet',
+      'joueclub.fr': 'JouéClub',
+      'oxybul.com': 'Oxybul',
+      'laredoute.fr': 'La Redoute',
+      'vertbaudet.fr': 'Vertbaudet',
+      'apple.com': 'Apple',
+      'corolle.com': 'Corolle',
+      'playmobil.com': 'Playmobil',
+      'lego.com': 'LEGO',
+    };
+
+    if (STORE_NAMES[domain]) {
+      siteName = STORE_NAMES[domain];
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -646,50 +680,69 @@ app.post('/api/scrape-link', async (req: Request, res: Response) => {
       if (response.ok) {
         const html = await response.text();
         const extracted = await extractMetadataFromHtml(html, parsedUrl.href);
-        title = extracted.title;
-        description = extracted.description;
-        imageUrl = extracted.imageUrl;
-        price = extracted.price;
+        if (extracted.title) title = extracted.title;
+        if (extracted.description) description = extracted.description;
+        if (extracted.imageUrl) imageUrl = extracted.imageUrl;
+        if (extracted.price) price = extracted.price;
         if (extracted.siteName) siteName = extracted.siteName;
       }
     } catch (scrapeErr) {
-      console.warn('Direct scrape failed or timed out:', scrapeErr);
+      console.warn('Direct scrape fetch failed or timed out:', scrapeErr);
     }
 
-    // Fallback extraction from URL slug
-    if (!title) {
+    // Direct Amazon ASIN CDN image assignment if no image found yet
+    if (!imageUrl && amazonAsin) {
+      imageUrl = `https://images-na.ssl-images-amazon.com/images/P/${amazonAsin.toUpperCase()}.01.LZZZZZZZ.jpg`;
+    }
+
+    // Fallback extraction from URL slug if title is missing or is just an ASIN / ID
+    const isJustAsin = title && amazonAsin && title.trim().toUpperCase() === amazonAsin.toUpperCase();
+    if (!title || isJustAsin) {
       const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-      const lastSegment = pathSegments[pathSegments.length - 1] || '';
-      const cleanSlug = decodeURIComponent(lastSegment)
+      // Look for a descriptive segment that is not an action or ID
+      const descriptiveSegments = pathSegments.filter(
+        seg => !['dp', 'gp', 'product', 'd', 'p', 'item', 'ref', 'buy', 'fr'].includes(seg.toLowerCase()) &&
+               !/^[A-Z0-9]{10}$/i.test(seg) &&
+               !/^[a-z]?[0-9]+$/i.test(seg) &&
+               seg.length > 2
+      );
+
+      const bestSegment = descriptiveSegments[0] || pathSegments[pathSegments.length - 1] || '';
+      const cleanSlug = decodeURIComponent(bestSegment)
         .replace(/[-_]/g, ' ')
         .replace(/\.(html|php|aspx|htm)$/i, '')
         .replace(/\b(dp|p|product|item|ref|gp|buy)\b/gi, '')
         .trim();
 
-      if (cleanSlug.length > 3) {
+      if (cleanSlug.length > 3 && !/^[A-Z0-9]{10}$/i.test(cleanSlug)) {
         title = cleanSlug.charAt(0).toUpperCase() + cleanSlug.slice(1);
       } else {
-        title = `Article sur ${domain}`;
+        title = `Article ${siteName}`;
       }
     }
 
     // Auto-categorize
     let category = 'Maison & Décoration';
     const lower = `${title} ${description} ${parsedUrl.pathname}`.toLowerCase();
-    if (lower.includes('poupée') || lower.includes('poupee') || lower.includes('barbie') || lower.includes('peluche') || lower.includes('doll') || lower.includes('doudou') || lower.includes('poupon')) {
+    if (lower.includes('poupée') || lower.includes('poupee') || lower.includes('barbie') || lower.includes('peluche') || lower.includes('doll') || lower.includes('doudou') || lower.includes('poupon') || lower.includes('corolle')) {
       category = 'Poupées';
-    } else if (lower.includes('livre') || lower.includes('roman') || lower.includes('bd') || lower.includes('manga') || lower.includes('book')) {
+    } else if (lower.includes('sport') || lower.includes('ski') || lower.includes('velo') || lower.includes('vélo') || lower.includes('rando') || lower.includes('randonnee') || lower.includes('randonnée') || lower.includes('camping') || lower.includes('fitness') || lower.includes('running') || lower.includes('escalade') || lower.includes('outdoor') || lower.includes('decathlon')) {
+      category = 'Sport & Outdoor';
+    } else if (lower.includes('livre') || lower.includes('roman') || lower.includes('bd') || lower.includes('manga') || lower.includes('book') || lower.includes('auteur')) {
       category = 'Livres & Culture';
-    } else if (lower.includes('pull') || lower.includes('veste') || lower.includes('chaussure') || lower.includes('echarpe') || lower.includes('mode') || lower.includes('sac') || lower.includes('robe')) {
+    } else if (lower.includes('pull') || lower.includes('veste') || lower.includes('chaussure') || lower.includes('echarpe') || lower.includes('mode') || lower.includes('sac') || lower.includes('robe') || lower.includes('manteau')) {
       category = 'Mode & Accessoires';
-    } else if (lower.includes('casque') || lower.includes('audio') || lower.includes('ecouteur') || lower.includes('enceinte') || lower.includes('tech') || lower.includes('console') || lower.includes('liseuse')) {
+    } else if (lower.includes('casque') || lower.includes('audio') || lower.includes('ecouteur') || lower.includes('enceinte') || lower.includes('tech') || lower.includes('console') || lower.includes('liseuse') || lower.includes('apple') || lower.includes('airpods')) {
       category = 'High-Tech & Audio';
     } else if (lower.includes('jeu') || lower.includes('jouet') || lower.includes('lego') || lower.includes('puzzle') || lower.includes('societe') || lower.includes('peinture') || lower.includes('atelier')) {
       category = 'Jeux & Loisirs';
-    } else if (lower.includes('sport') || lower.includes('ski') || lower.includes('velo') || lower.includes('vélo') || lower.includes('rando') || lower.includes('randonnee') || lower.includes('randonnée') || lower.includes('camping') || lower.includes('fitness') || lower.includes('running') || lower.includes('escalade') || lower.includes('outdoor')) {
-      category = 'Sport & Outdoor';
     } else if (lower.includes('parfum') || lower.includes('creme') || lower.includes('soin') || lower.includes('beaute') || lower.includes('maquillage')) {
       category = 'Beauté & Bien-être';
+    }
+
+    // If still no image, use smart curated fallback image for that category/keyword
+    if (!imageUrl) {
+      imageUrl = getSmartFallbackImage(title, category);
     }
 
     return res.json({
@@ -701,10 +754,40 @@ app.post('/api/scrape-link', async (req: Request, res: Response) => {
       siteName,
       category,
       url: parsedUrl.href,
+      success: true,
     });
   } catch (error: any) {
     console.error('Scrape error:', error);
-    return res.status(500).json({ error: 'Impossible d\'analyser le lien' });
+    // Graceful recovery: always return 200 with fallback data instead of 500
+    try {
+      const rawUrl = String(req.body?.url || '');
+      const cleanUrl = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+      const urlObj = new URL(cleanUrl);
+      const domain = urlObj.hostname.replace(/^www\./, '');
+      return res.json({
+        title: `Article ${domain}`,
+        description: '',
+        imageUrl: getSmartFallbackImage('cadeau', 'Maison & Décoration'),
+        price: 0,
+        domain,
+        siteName: domain,
+        category: 'Maison & Décoration',
+        url: urlObj.href,
+        success: true,
+      });
+    } catch {
+      return res.json({
+        title: 'Nouvelle idée cadeau',
+        description: '',
+        imageUrl: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=800&q=80',
+        price: 0,
+        domain: '',
+        siteName: '',
+        category: 'Maison & Décoration',
+        url: String(req.body?.url || ''),
+        success: true,
+      });
+    }
   }
 });
 

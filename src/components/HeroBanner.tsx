@@ -1,8 +1,8 @@
 import React from 'react';
 import { Gift, CheckCircle2, ArrowRight } from 'lucide-react';
 import { FamilyMember, GiftItem, FAMILY_MEMBERS } from '../types';
+import { MEMBER_AVATARS, zoeAvatar } from '../assets/avatars';
 import heroFestiveImg from '../assets/images/hero_christmas_festive_1794241165301.jpg';
-import zoePhoto from '../assets/images/zoe_photo.jpeg';
 
 interface HeroBannerProps {
   gifts: GiftItem[];
@@ -134,21 +134,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                     }`}
                   >
                     <div
-                      className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full font-serif text-sm sm:text-base font-bold shadow-xs mb-2 transition-transform group-hover:scale-105 overflow-hidden ${
+                      className={`relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full shadow-md mb-2 transition-transform group-hover:scale-105 overflow-hidden ring-2 ${
                         isSelected
-                          ? memberColors.avatar
-                          : 'bg-white/20 text-white border border-white/20'
+                          ? memberColors.ring + ' ring-offset-2 ring-offset-white'
+                          : 'ring-white/40'
                       }`}
                     >
-                      {name === 'Zoé' ? (
-                        <img
-                          src={zoePhoto}
-                          alt="Zoé"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        profile.avatarText
-                      )}
+                      <img
+                        src={MEMBER_AVATARS[name]}
+                        alt={name}
+                        className="h-full w-full object-cover object-top"
+                      />
                     </div>
 
                     <span className={`text-sm sm:text-base font-bold leading-tight ${isSelected ? memberColors.activeText : 'text-white'}`}>
@@ -178,7 +174,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 title="Afficher la liste de souhaits de Zoé"
               >
                 <img
-                  src={zoePhoto}
+                  src={zoeAvatar}
                   alt="Photo de Zoé"
                   className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-pink-400 ring-2 ring-pink-500/30 shadow-xs"
                 />

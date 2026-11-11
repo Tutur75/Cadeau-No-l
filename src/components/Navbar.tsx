@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gift, Sparkles, Lock, Unlock } from 'lucide-react';
 import { FamilyMember } from '../types';
+import { MEMBER_AVATARS } from '../assets/avatars';
 
 interface NavbarProps {
   currentTab: FamilyMember | 'all';
@@ -48,33 +49,48 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => onSelectTab('Audrey')}
-            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium flex items-center gap-1.5 ${
               currentTab === 'Audrey'
                 ? 'text-purple-700 font-bold border-b-2 border-purple-600 pb-1'
                 : 'text-stone-600 hover:text-purple-700'
             }`}
           >
-            Audrey
+            <img
+              src={MEMBER_AVATARS['Audrey']}
+              alt="Audrey"
+              className="h-4.5 w-4.5 rounded-full object-cover border border-purple-300"
+            />
+            <span>Audrey</span>
           </button>
           <button
             onClick={() => onSelectTab('Arthur')}
-            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium flex items-center gap-1.5 ${
               currentTab === 'Arthur'
                 ? 'text-blue-700 font-bold border-b-2 border-blue-600 pb-1'
                 : 'text-stone-600 hover:text-blue-700'
             }`}
           >
-            Arthur
+            <img
+              src={MEMBER_AVATARS['Arthur']}
+              alt="Arthur"
+              className="h-4.5 w-4.5 rounded-full object-cover border border-blue-300"
+            />
+            <span>Arthur</span>
           </button>
           <button
             onClick={() => onSelectTab('Zoé')}
-            className={`whitespace-nowrap shrink-0 transition-colors font-medium ${
+            className={`whitespace-nowrap shrink-0 transition-colors font-medium flex items-center gap-1.5 ${
               currentTab === 'Zoé'
                 ? 'text-pink-600 font-bold border-b-2 border-pink-500 pb-1'
                 : 'text-stone-600 hover:text-pink-600'
             }`}
           >
-            Zoé
+            <img
+              src={MEMBER_AVATARS['Zoé']}
+              alt="Zoé"
+              className="h-4.5 w-4.5 rounded-full object-cover border border-pink-300"
+            />
+            <span>Zoé</span>
           </button>
         </nav>
 

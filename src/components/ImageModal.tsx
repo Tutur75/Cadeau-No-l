@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, ExternalLink, Gift, ZoomIn, Heart } from 'lucide-react';
 import { GiftItem, FAMILY_MEMBERS } from '../types';
+import { MEMBER_AVATARS } from '../assets/avatars';
 
 interface ImageModalProps {
   gift: GiftItem | null;
@@ -35,12 +36,12 @@ export const ImageModal: React.FC<ImageModalProps> = ({ gift, isOpen, onClose })
         {/* Header bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-stone-100 bg-stone-50/90 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0 pr-4">
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-xs shrink-0"
-              style={{ backgroundColor: profile.accentColor }}
-            >
-              <Gift className="h-4 w-4" />
-            </span>
+            <img
+              src={MEMBER_AVATARS[gift.recipient]}
+              alt={gift.recipient}
+              className="h-8 w-8 rounded-full object-cover border-2 shadow-xs shrink-0"
+              style={{ borderColor: profile.accentColor }}
+            />
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-stone-900 truncate">
                 {gift.title}

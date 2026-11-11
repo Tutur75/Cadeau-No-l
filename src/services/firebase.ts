@@ -64,7 +64,7 @@ export function handleFirestoreError(
   throw new Error(JSON.stringify(errInfo));
 }
 
-// Test initial connection as required by Firestore integration guidelines
+// Test initial connection as required by Firestore integration guidelines (lazy on-demand only)
 export async function testFirestoreConnection(): Promise<boolean> {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
@@ -76,9 +76,6 @@ export async function testFirestoreConnection(): Promise<boolean> {
     return false;
   }
 }
-
-// Immediately trigger connection test
-testFirestoreConnection();
 
 const GIFTS_COLLECTION = 'gifts';
 
