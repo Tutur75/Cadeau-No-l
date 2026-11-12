@@ -1,7 +1,7 @@
 import React from 'react';
 import { Gift, CheckCircle2, ArrowRight } from 'lucide-react';
 import { FamilyMember, GiftItem, FAMILY_MEMBERS } from '../types';
-import { MEMBER_AVATARS, zoeAvatar } from '../assets/avatars';
+import { MEMBER_AVATARS } from '../assets/avatars';
 import heroFestiveImg from '../assets/images/hero_christmas_festive_1794241165301.jpg';
 
 interface HeroBannerProps {
@@ -163,29 +163,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                   </button>
                 );
               })}
-            </div>
-
-            {/* Photo de Zoé placée en dessous du bouton Zoé */}
-            <div className="flex justify-end pr-1">
-              <button
-                type="button"
-                onClick={() => onSelectRecipient('Zoé')}
-                className="group/zoepic flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md transition-all shadow-sm text-left hover:scale-[1.02]"
-                title="Afficher la liste de souhaits de Zoé"
-              >
-                <img
-                  src={zoeAvatar}
-                  alt="Photo de Zoé"
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-pink-400 ring-2 ring-pink-500/30 shadow-xs"
-                />
-                <div className="text-[11px] leading-tight">
-                  <span className="font-bold text-pink-200 group-hover/zoepic:text-pink-100 flex items-center gap-1">
-                    <span>Zoé</span>
-                    <span className="text-[10px]">✨</span>
-                  </span>
-                  <span className="text-white/70 block text-[10px]">Voir sa hotte</span>
-                </div>
-              </button>
             </div>
           </div>
 
