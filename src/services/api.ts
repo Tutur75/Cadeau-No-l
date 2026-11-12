@@ -93,6 +93,38 @@ function mergeGiftLists(...lists: (GiftItem[] | null | undefined)[]): GiftItem[]
   return Array.from(map.values());
 }
 
+// Safe localStorage helper that gracefully handles browser storage quotas without throwing
+function safeSetLocalStorage(key: string, data: any): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (err) {
+    console.warn('Browser localStorage quota exceeded, attempting sanitized cache:', err);
+    try {
+      if (Array.isArray(data)) {
+        // Strip heavy base64 data URLs (> 20KB) in local storage cache so it stays well under the 5MB browser limit
+        const sanitized = data.map((item) => {
+          if (
+            item &&
+            typeof item.imageUrl === 'string' &&
+            item.imageUrl.startsWith('data:image/') &&
+            item.imageUrl.length > 20000
+          ) {
+            return { ...item, imageUrl: '' };
+          }
+          return item;
+        });
+        localStorage.setItem(key, JSON.stringify(sanitized));
+      }
+    } catch {
+      // If still exceeding or storage is disabled, fail silently without disrupting application flow
+    }
+  }
+}
+
+export function saveGiftsToCache(gifts: GiftItem[]): void {
+  safeSetLocalStorage(STORAGE_KEY, gifts);
+}
+
 export async function fetchGifts(): Promise<GiftItem[]> {
   // Read local storage cache first
   let cachedGifts: GiftItem[] = [];
@@ -109,26 +141,22 @@ export async function fetchGifts(): Promise<GiftItem[]> {
   }
 
   // 1. Try Firebase Firestore
+  let firestoreGifts: GiftItem[] | null = null;
   try {
-    const firestoreGifts = await getGiftsFromFirestore();
-    if (firestoreGifts && firestoreGifts.length > 0) {
-      const merged = mergeGiftLists(cachedGifts, firestoreGifts);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      return merged;
-    }
-
-    // If Firestore is truly empty on first ever run, seed with bundled wishlist
-    const bundledData = defaultWishlist as GiftItem[];
-    if (bundledData.length > 0) {
-      for (const item of bundledData) {
-        saveGiftToFirestore(item).catch(() => {});
-      }
-      const initial = mergeGiftLists(cachedGifts, bundledData);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return initial;
-    }
+    firestoreGifts = await getGiftsFromFirestore();
   } catch (err: any) {
-    console.warn('Firestore fetch returned quota error or offline. Using local storage & backend fallback:', err);
+    console.warn('Firestore fetch notice (quota or offline), proceeding with fallback:', err);
+  }
+
+  if (firestoreGifts && firestoreGifts.length > 0) {
+    const merged = mergeGiftLists(cachedGifts, firestoreGifts);
+    safeSetLocalStorage(STORAGE_KEY, merged);
+    return merged;
+  }
+
+  // If local storage already has user gifts, preserve them
+  if (cachedGifts.length > 0) {
+    return cachedGifts;
   }
 
   // 2. Server API fallback (Express backend)
@@ -138,7 +166,7 @@ export async function fetchGifts(): Promise<GiftItem[]> {
       const serverGifts = await res.json();
       if (Array.isArray(serverGifts) && serverGifts.length > 0) {
         const merged = mergeGiftLists(cachedGifts, serverGifts);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        safeSetLocalStorage(STORAGE_KEY, merged);
         return merged;
       }
     }
@@ -151,9 +179,9 @@ export async function fetchGifts(): Promise<GiftItem[]> {
     return cachedGifts;
   }
 
-  // 4. Bundled fallback
+  // 4. Bundled fallback (only on very first clean install)
   const fallback = (defaultWishlist as GiftItem[]) || [];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
+  safeSetLocalStorage(STORAGE_KEY, fallback);
   return fallback;
 }
 
@@ -183,7 +211,7 @@ export async function createGift(giftData: Partial<GiftItem>): Promise<GiftItem>
     const cached: GiftItem[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const filtered = cached.filter(g => g.id !== newItem.id);
     filtered.unshift(newItem);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    safeSetLocalStorage(STORAGE_KEY, filtered);
   } catch {
     // ignore
   }
@@ -214,7 +242,7 @@ export async function updateGift(id: string, updates: Partial<GiftItem>): Promis
     if (index !== -1) {
       cached[index] = { ...cached[index], ...updates };
       updatedItem = cached[index];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cached));
+      safeSetLocalStorage(STORAGE_KEY, cached);
     }
   } catch {
     // ignore
@@ -242,7 +270,7 @@ export async function deleteGift(id: string): Promise<boolean> {
   try {
     const cached: GiftItem[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     const filtered = cached.filter(g => g.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    safeSetLocalStorage(STORAGE_KEY, filtered);
   } catch {
     // ignore
   }
@@ -469,7 +497,7 @@ export async function getAiSuggestions(person: string, interests?: string, budge
 
 export async function importGifts(gifts: GiftItem[]) {
   // Save to localStorage immediately
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(gifts));
+  safeSetLocalStorage(STORAGE_KEY, gifts);
 
   // Sync to Firestore
   for (const gift of gifts) {

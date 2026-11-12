@@ -102,23 +102,69 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
     }
   };
 
-  // Handle photo file import
-  const handlePhotoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper to compress uploaded image files into high-quality, lightweight Web/Firestore JPEG (~30-60KB)
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(e.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(compressed);
+        };
+        img.onerror = () => reject(new Error('Erreur de lecture de l\'image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Erreur de chargement du fichier'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle photo file import with compression
+  const handlePhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 6 * 1024 * 1024) {
-      alert("L'image sélectionnée est trop lourde (maximum 6 Mo).");
+    if (file.size > 12 * 1024 * 1024) {
+      alert("L'image sélectionnée est trop volumineuse (maximum 12 Mo).");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (typeof event.target?.result === 'string') {
-        setImageUrl(event.target.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      setImageUrl(compressedDataUrl);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (typeof event.target?.result === 'string') {
+          setImageUrl(event.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Load AI ideas
@@ -188,7 +234,7 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
               {initialEditGift ? 'Modifier le cadeau' : 'Ajouter un cadeau à la liste'}
             </h2>
             <p className="text-xs text-stone-500">
-              Inspiré de Milirose avec lien boutique dédié et import de photos
+              Avec lien boutique dédié et import de photos
             </p>
           </div>
 

@@ -145,36 +145,15 @@ export const GiftCard: React.FC<GiftCardProps> = ({
       {/* Content Area - concise and neat */}
       <div className="flex flex-1 flex-col p-3.5 sm:p-4">
         
-        {/* Unboxed Metadata: Category, Store, and Priority tag */}
-        <div className="flex items-center justify-between gap-1.5 text-[11px] mb-1.5">
-          <div className="flex items-center gap-1 text-stone-500 truncate min-w-0">
-            <span className="truncate">{gift.category}</span>
-            {gift.storeName && (
-              <>
-                <span aria-hidden="true" className="text-stone-300">·</span>
-                <span className="font-medium text-stone-700 truncate">{gift.storeName}</span>
-              </>
-            )}
-          </div>
-
-          <div className="shrink-0">
-            {gift.priority === 'Coup de cœur' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                <Heart className="h-2.5 w-2.5 fill-current text-rose-600" />
-                <span>Coup de cœur</span>
-              </span>
-            )}
-            {gift.priority === 'Très souhaité' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                <span>⭐ Très souhaité</span>
-              </span>
-            )}
-            {(gift.priority === 'Souhaité' || !gift.priority) && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600 border border-stone-200">
-                <span>🎁 Souhaité</span>
-              </span>
-            )}
-          </div>
+        {/* Unboxed Metadata: Category and Store */}
+        <div className="flex items-center gap-1 text-[11px] text-stone-500 truncate mb-1.5 min-w-0">
+          <span className="truncate">{gift.category}</span>
+          {gift.storeName && (
+            <>
+              <span aria-hidden="true" className="text-stone-300">·</span>
+              <span className="font-medium text-stone-700 truncate">{gift.storeName}</span>
+            </>
+          )}
         </div>
 
         {/* Title */}

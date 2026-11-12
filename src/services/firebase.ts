@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import {
-  getFirestore,
+  initializeFirestore,
   collection,
   doc,
   getDocs,
@@ -12,9 +12,16 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 import { GiftItem } from '../types';
 
-// Initialize Firebase App & Firestore with custom databaseId
+// Initialize Firebase App & Firestore with auto-detect long polling
+// to prevent WebSocket/socket errors and preserve continuous access across any network
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = initializeFirestore(
+  app,
+  {
+    experimentalAutoDetectLongPolling: true,
+  },
+  firebaseConfig.firestoreDatabaseId
+);
 
 export enum OperationType {
   CREATE = 'create',
@@ -118,7 +125,12 @@ export async function getGiftsFromFirestore(): Promise<GiftItem[]> {
     });
     return items;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, GIFTS_COLLECTION);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes('insufficient permissions') || errMsg.includes('PERMISSION_DENIED')) {
+      handleFirestoreError(error, OperationType.LIST, GIFTS_COLLECTION);
+    }
+    console.warn('Firestore getGiftsFromFirestore paused (quota or offline):', errMsg);
+    throw error;
   }
 }
 
@@ -218,10 +230,15 @@ export function subscribeToGifts(
       onData(items);
     },
     (error) => {
+      const errMsg = error instanceof Error ? error.message : String(error);
       if (onError) {
         onError(error);
       }
-      handleFirestoreError(error, OperationType.GET, GIFTS_COLLECTION);
+      if (errMsg.includes('insufficient permissions') || errMsg.includes('PERMISSION_DENIED')) {
+        handleFirestoreError(error, OperationType.GET, GIFTS_COLLECTION);
+      } else {
+        console.warn('Firestore real-time subscription paused (quota or offline):', errMsg);
+      }
     }
   );
 

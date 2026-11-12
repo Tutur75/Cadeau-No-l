@@ -14,6 +14,7 @@ import {
   reserveGift,
   unreserveGift,
   subscribeToGifts,
+  saveGiftsToCache,
 } from './services/api';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
@@ -126,11 +127,12 @@ export default function App() {
         (realtimeGifts) => {
           if (realtimeGifts && realtimeGifts.length > 0) {
             setGifts(deduplicateGifts(realtimeGifts));
+            saveGiftsToCache(realtimeGifts);
             setIsLoading(false);
           }
         },
-        () => {
-          // Fallback silently without throwing to maintain smooth UX
+        (error) => {
+          console.warn('Firestore real-time sync connection notice:', error);
         }
       );
     } catch {
@@ -558,8 +560,6 @@ export default function App() {
             <span className="font-serif font-bold text-stone-800 text-sm">
               Listes de Noël 2026 · Audrey, Arthur &amp; Zoé
             </span>
-            <span>·</span>
-            <span>Inspiré de milirose.com</span>
           </div>
 
           <div className="flex items-center gap-4">
