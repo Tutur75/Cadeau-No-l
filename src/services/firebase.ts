@@ -12,13 +12,16 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 import { GiftItem } from '../types';
 
-// Initialize Firebase App & Firestore with auto-detect long polling
-// to prevent WebSocket/socket errors and preserve continuous access across any network
+// Initialize Firebase App & Firestore with forced HTTP long polling
+// to completely eliminate WebSocket/WebChannel errors and preserve continuous access across proxies
 const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(
   app,
   {
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
+    experimentalLongPollingOptions: {
+      timeoutSeconds: 30,
+    },
   },
   firebaseConfig.firestoreDatabaseId
 );

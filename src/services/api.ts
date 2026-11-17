@@ -101,13 +101,13 @@ function safeSetLocalStorage(key: string, data: any): void {
     console.warn('Browser localStorage quota exceeded, attempting sanitized cache:', err);
     try {
       if (Array.isArray(data)) {
-        // Strip heavy base64 data URLs (> 20KB) in local storage cache so it stays well under the 5MB browser limit
+        // Strip heavy base64 data URLs (> 120KB) only if browser localStorage actually overflows
         const sanitized = data.map((item) => {
           if (
             item &&
             typeof item.imageUrl === 'string' &&
             item.imageUrl.startsWith('data:image/') &&
-            item.imageUrl.length > 20000
+            item.imageUrl.length > 120000
           ) {
             return { ...item, imageUrl: '' };
           }

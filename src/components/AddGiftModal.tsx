@@ -73,7 +73,86 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle URL scraping
+  // Shared HTML5 canvas compressor: caps dimensions to 640px and guarantees compact JPEG (~20-60KB)
+  const compressImageElement = (img: HTMLImageElement): string => {
+    if (img.naturalWidth < 16 || img.naturalHeight < 16) {
+      throw new Error('Image trop petite ou invalide');
+    }
+    const maxDim = 640;
+    let width = img.naturalWidth || img.width;
+    let height = img.naturalHeight || img.height;
+
+    if (width > maxDim || height > maxDim) {
+      if (width > height) {
+        height = Math.round((height * maxDim) / width);
+        width = maxDim;
+      } else {
+        width = Math.round((width * maxDim) / height);
+        height = maxDim;
+      }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas indisponible');
+
+    // Fill white background so transparent PNG product photos convert cleanly to JPEG
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+
+    let compressed = canvas.toDataURL('image/jpeg', 0.75);
+    // If still larger than 90KB, step down quality to keep Firestore documents light
+    if (compressed.length > 90000) {
+      compressed = canvas.toDataURL('image/jpeg', 0.58);
+    }
+    return compressed;
+  };
+
+  // Download external image via CORS-safe proxy and compress to lightweight base64 JPEG
+  const compressImageFromUrl = async (rawUrl: string): Promise<string> => {
+    if (!rawUrl || !rawUrl.startsWith('http')) return rawUrl;
+
+    const tryLoad = (src: string, useAnonymousCors: boolean): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        if (useAnonymousCors) {
+          img.crossOrigin = 'anonymous';
+        }
+        const timer = setTimeout(() => reject(new Error('Timeout image')), 6500);
+        img.onload = () => {
+          clearTimeout(timer);
+          try {
+            resolve(compressImageElement(img));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error('Erreur de chargement image'));
+        };
+        img.src = src;
+      });
+
+    // 1. Try via our same-origin proxy (zero CORS issues, bypasses hotlink blocks)
+    try {
+      const proxiedSrc = `/api/proxy-image?url=${encodeURIComponent(rawUrl)}`;
+      return await tryLoad(proxiedSrc, false);
+    } catch {
+      // 2. Fallback: try direct anonymous CORS load
+      try {
+        return await tryLoad(rawUrl, true);
+      } catch {
+        // Keep external URL if canvas compression isn't permitted
+        return rawUrl;
+      }
+    }
+  };
+
+  // Handle URL scraping + automatic image compression
   const handleScrape = async () => {
     if (!urlInput.trim()) {
       setScrapeError('Veuillez entrer une adresse URL');
@@ -91,10 +170,24 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
         setPrice(data.price);
       }
       if (data.siteName) setStoreName(data.siteName);
-      if (data.imageUrl) setImageUrl(data.imageUrl);
       if (data.description) setDescription(data.description);
       if (data.category) setCategory(data.category);
-      setScrapeSuccess('✨ Informations récupérées ! Vérifiez et ajustez les détails ci-dessous.');
+
+      let photoStatus = '';
+      if (data.imageUrl) {
+        const compressedImg = await compressImageFromUrl(data.imageUrl);
+        setImageUrl(compressedImg);
+        if (compressedImg.startsWith('data:image/')) {
+          photoStatus = ' (photo compressée automatiquement)';
+        }
+      }
+
+      const hasPrice = data.price && Number(data.price) > 0;
+      setScrapeSuccess(
+        `✨ Informations récupérées${photoStatus} ! ${
+          hasPrice ? 'Prix et photo importés.' : 'Vérifiez et complétez le prix si besoin.'
+        }`
+      );
     } catch (err: any) {
       setScrapeError(err.message || 'Impossible d\'analyser le lien, vous pouvez remplir les champs manuellement.');
     } finally {
@@ -102,38 +195,18 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
     }
   };
 
-  // Helper to compress uploaded image files into high-quality, lightweight Web/Firestore JPEG (~30-60KB)
+  // Helper to compress uploaded image files into lightweight Web/Firestore JPEG (~20-60KB)
   const compressImageFile = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 800;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
+          try {
+            resolve(compressImageElement(img));
+          } catch {
             resolve(e.target?.result as string);
-            return;
           }
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(compressed);
         };
         img.onerror = () => reject(new Error('Erreur de lecture de l\'image'));
         img.src = e.target?.result as string;
@@ -184,6 +257,11 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
 
+    let finalImageUrl = imageUrl.trim();
+    if (finalImageUrl.startsWith('http')) {
+      finalImageUrl = await compressImageFromUrl(finalImageUrl);
+    }
+
     await onAddGift({
       recipient,
       title: title.trim(),
@@ -191,7 +269,7 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
       storeName: storeName.trim(),
       category,
       priority,
-      imageUrl: imageUrl.trim(),
+      imageUrl: finalImageUrl,
       description: description.trim(),
       url: urlInput.trim(),
       addedBy: recipient,
@@ -351,6 +429,12 @@ export const AddGiftModal: React.FC<AddGiftModalProps> = ({
                   type="url"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleScrape();
+                    }
+                  }}
                   placeholder="https://www.fnac.com/livre-ou-article..."
                   className="flex-1 px-3.5 py-2 text-xs sm:text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                 />
